@@ -183,7 +183,7 @@ class TicketCategorySerializer(serializers.ModelSerializer):
     
     class Meta:
         model = TicketCategory
-        fields = ['id', 'name', 'description', 'icon', 'color', 'is_active', 'template']
+        fields = ['id', 'name', 'description', 'icon', 'color', 'background_image', 'is_active', 'template', 'created_at', 'updated_at']
 
 
 class TicketSubcategorySerializer(serializers.ModelSerializer):
@@ -191,7 +191,7 @@ class TicketSubcategorySerializer(serializers.ModelSerializer):
     
     class Meta:
         model = TicketSubcategory
-        fields = ['id', 'name', 'icon', 'color', 'is_active']
+        fields = ['id', 'name', 'description', 'icon', 'color', 'background_image', 'is_active', 'created_at', 'updated_at']
 
 
 class WorkSessionSerializer(serializers.ModelSerializer):
