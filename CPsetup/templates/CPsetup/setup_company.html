@@ -1,0 +1,274 @@
+{% extends 'base.html' %}
+
+{% block title %}Configuración de Empresa - ServiceNow Cerro Verde{% endblock %}
+
+{% block extra_css %}
+<style>
+    .setup-container {
+        background: var(--neutral-light);
+        border-radius: 15px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        margin: 2rem auto;
+        max-width: 800px;
+        overflow: hidden;
+    }
+    
+    .setup-header {
+        background: var(--primary-dark);
+        color: var(--neutral-light);
+        padding: 2rem;
+        text-align: center;
+    }
+    
+    .setup-header h1 {
+        margin: 0;
+        font-size: 2rem;
+        font-weight: 300;
+    }
+    
+    .setup-header p {
+        margin: 0.5rem 0 0 0;
+        opacity: 0.9;
+    }
+    
+    .stepper {
+        display: flex;
+        justify-content: center;
+        padding: 2rem;
+        background: var(--neutral-gray);
+    }
+    
+    .step {
+        display: flex;
+        align-items: center;
+        margin: 0 1rem;
+    }
+    
+    .step-number {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: var(--neutral-light);
+        border: 2px solid var(--primary-light);
+        color: var(--primary-light);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        margin-right: 0.5rem;
+    }
+    
+    .step.active .step-number {
+        background: var(--primary-light);
+        color: var(--neutral-light);
+    }
+    
+    .step.completed .step-number {
+        background: var(--accent-green);
+        border-color: var(--accent-green);
+        color: var(--neutral-light);
+    }
+    
+    .step-label {
+        color: var(--primary-dark);
+        font-weight: 500;
+    }
+    
+    .step.active .step-label {
+        color: var(--primary-light);
+    }
+    
+    .step.completed .step-label {
+        color: var(--accent-green);
+    }
+    
+    .step-connector {
+        width: 60px;
+        height: 2px;
+        background: var(--neutral-gray);
+        margin: 0 0.5rem;
+    }
+    
+    .step-connector.active {
+        background: var(--primary-light);
+    }
+    
+    .step-connector.completed {
+        background: var(--accent-green);
+    }
+    
+    .setup-content {
+        padding: 3rem;
+    }
+    
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+    
+    .form-label {
+        font-weight: 600;
+        color: var(--primary-dark);
+        margin-bottom: 0.5rem;
+    }
+    
+    .form-control {
+        border: 2px solid var(--neutral-gray);
+        border-radius: 8px;
+        padding: 0.75rem;
+        transition: all 0.3s ease;
+    }
+    
+    .form-control:focus {
+        border-color: var(--primary-light);
+        box-shadow: 0 0 0 0.2rem rgba(128, 182, 161, 0.25);
+    }
+    
+    .file-upload {
+        position: relative;
+        display: inline-block;
+        cursor: pointer;
+        width: 100%;
+    }
+    
+    .file-upload input[type=file] {
+        position: absolute;
+        opacity: 0;
+        width: 100%;
+        height: 100%;
+        cursor: pointer;
+    }
+    
+    .file-upload-label {
+        display: block;
+        padding: 1rem;
+        border: 2px dashed var(--primary-light);
+        border-radius: 8px;
+        text-align: center;
+        color: var(--primary-light);
+        transition: all 0.3s ease;
+    }
+    
+    .file-upload:hover .file-upload-label {
+        background: var(--primary-light);
+        color: var(--neutral-light);
+    }
+    
+    .logo-preview {
+        width: 150px;
+        height: 80px;
+        border: 2px solid var(--primary-light);
+        border-radius: 8px;
+        object-fit: contain;
+        margin: 1rem auto;
+        display: block;
+        background: var(--neutral-gray);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="setup-container">
+    <!-- Header -->
+    <div class="setup-header">
+        <h1>Configuración del Sistema</h1>
+        <p>ServiceNow Cerro Verde - Configuración inicial</p>
+    </div>
+    
+    <!-- Stepper -->
+    <div class="stepper">
+        <div class="step active">
+            <div class="step-number">1</div>
+            <div class="step-label">Empresa</div>
+        </div>
+        <div class="step-connector"></div>
+        <div class="step">
+            <div class="step-number">2</div>
+            <div class="step-label">Administrador</div>
+        </div>
+    </div>
+    
+    <!-- Content -->
+    <div class="setup-content">
+        <h3 class="mb-4">Paso 1: Información de la Empresa</h3>
+        <p class="text-muted mb-4">Configure la información básica de su empresa. Esta configuración solo se realiza una vez.</p>
+        
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="company_name" class="form-label">Nombre de la Empresa *</label>
+                        <input type="text" class="form-control" id="company_name" name="company_name" required>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="ruc" class="form-label">RUC</label>
+                        <input type="text" class="form-control" id="ruc" name="ruc" maxlength="11">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="email" class="form-label">Email</label>
+                        <input type="email" class="form-control" id="email" name="email">
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="phone" class="form-label">Teléfono</label>
+                        <input type="tel" class="form-control" id="phone" name="phone">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="address" class="form-label">Dirección</label>
+                <textarea class="form-control" id="address" name="address" rows="3"></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label for="logo" class="form-label">Logo de la Empresa</label>
+                <div class="file-upload">
+                    <input type="file" id="logo" name="logo" accept="image/*" onchange="previewLogo(this)">
+                    <label for="logo" class="file-upload-label">
+                        <i class="fas fa-upload me-2"></i>
+                        Haga clic para seleccionar el logo (PNG, JPG, SVG)
+                    </label>
+                </div>
+                <img id="logo-preview" class="logo-preview" style="display: none;">
+            </div>
+            
+            <div class="d-flex justify-content-end mt-4">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-arrow-right me-2"></i>
+                    Continuar al Siguiente Paso
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function previewLogo(input) {
+    const preview = document.getElementById('logo-preview');
+    const file = input.files[0];
+    
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            preview.src = e.target.result;
+            preview.style.display = 'block';
+        }
+        reader.readAsDataURL(file);
+    } else {
+        preview.style.display = 'none';
+    }
+}
+</script>
+{% endblock %}

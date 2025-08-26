@@ -1,0 +1,899 @@
+{% extends 'CPdashadmin/base_admin.html' %}
+
+{% block admin_title %}Configuración del Sistema{% endblock %}
+
+{% block content_title %}Configuración del Sistema{% endblock %}
+{% block content_subtitle %}Gestionar configuraciones globales del sistema{% endblock %}
+
+{% block admin_content %}
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb" class="mb-4">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item">
+            <a href="{% url 'CPdashadmin:dashboard' %}">
+                <i class="bi bi-house"></i> Dashboard
+            </a>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">
+            <i class="bi bi-gear"></i> Configuración
+        </li>
+    </ol>
+</nav>
+
+<!-- Settings Tabs -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <ul class="nav nav-tabs card-header-tabs" id="settingsTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="network-tab" data-bs-toggle="tab" data-bs-target="#network" type="button" role="tab">
+                            <i class="bi bi-wifi me-2"></i>Configuración de Red
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="kiosk-tab" data-bs-toggle="tab" data-bs-target="#kiosk" type="button" role="tab">
+                            <i class="bi bi-display me-2"></i>Configuración de Kioskos
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="general-tab" data-bs-toggle="tab" data-bs-target="#general" type="button" role="tab">
+                            <i class="bi bi-gear me-2"></i>Configuración General
+                        </button>
+                    </li>
+                </ul>
+            </div>
+            <div class="card-body">
+                <div class="tab-content" id="settingsTabsContent">
+                    <!-- Network Configuration Tab -->
+                    <div class="tab-pane fade show active" id="network" role="tabpanel">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <form id="networkSettingsForm">
+                                    {% csrf_token %}
+                                    
+                                    <!-- IP Configuration -->
+                                    <div class="mb-4">
+                                        <h5><i class="bi bi-wifi me-2"></i>Configuración de IP</h5>
+                                        <div class="alert alert-info">
+                                            <i class="bi bi-info-circle me-2"></i>
+                                            <strong>Información:</strong> Configura las IPs para el acceso a kioskos y servicios.
+                                        </div>
+                                        
+                                        <!-- IP Local -->
+                                        <div class="mb-3">
+                                            <label for="localIp" class="form-label">
+                                                <i class="bi bi-house me-2"></i>IP Local
+                                            </label>
+                                            <div class="input-group">
+                                                <span class="input-group-text">http://</span>
+                                                <input type="text" class="form-control" id="localIp" 
+                                                       placeholder="192.168.1.100:8000" value="{{ settings.local_ip|default:'' }}">
+                                                <span class="input-group-text">/kiosk/</span>
+                                            </div>
+                                            <div class="form-text">IP local para acceso interno (ej: 192.168.1.100:8000)</div>
+                                        </div>
+                                        
+                                        <!-- IP Pública -->
+                                        <div class="mb-3">
+                                            <label for="publicIp" class="form-label">
+                                                <i class="bi bi-globe me-2"></i>IP Pública
+                                            </label>
+                                            <div class="input-group">
+                                                <span class="input-group-text">https://</span>
+                                                <input type="text" class="form-control" id="publicIp" 
+                                                       placeholder="tu-dominio.com" value="{{ settings.public_ip|default:'' }}">
+                                                <span class="input-group-text">/kiosk/</span>
+                                            </div>
+                                            <div class="form-text">Dominio público para acceso externo (ej: tu-dominio.com)</div>
+                                        </div>
+                                        
+                                        <!-- Puerto -->
+                                        <div class="mb-3">
+                                            <label for="port" class="form-label">
+                                                <i class="bi bi-hdd-network me-2"></i>Puerto
+                                            </label>
+                                            <input type="number" class="form-control" id="port" 
+                                                   placeholder="8000" value="{{ settings.port|default:'8000' }}" min="1" max="65535">
+                                            <div class="form-text">Puerto del servidor (por defecto: 8000)</div>
+                                        </div>
+                                        
+                                        <!-- Modo de Detección -->
+                                        <div class="mb-3">
+                                            <label class="form-label">
+                                                <i class="bi bi-arrow-repeat me-2"></i>Modo de Detección
+                                            </label>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="detectionMode" id="autoMode" value="auto" 
+                                                       {% if settings.detection_mode == 'auto' or not settings.detection_mode %}checked{% endif %}>
+                                                <label class="form-check-label" for="autoMode">
+                                                    <strong>Automático</strong> - Detecta automáticamente IP local y pública
+                                                </label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="detectionMode" id="manualMode" value="manual"
+                                                       {% if settings.detection_mode == 'manual' %}checked{% endif %}>
+                                                <label class="form-check-label" for="manualMode">
+                                                    <strong>Manual</strong> - Usa las IPs configuradas manualmente
+                                                </label>
+                                            </div>
+                                            <div class="form-text">El modo automático detecta la IP del cliente y usa la configuración más apropiada</div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Test Connection -->
+                                    <div class="mb-4">
+                                        <h5><i class="bi bi-connection me-2"></i>Probar Conexiones</h5>
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <button type="button" class="btn btn-outline-primary w-100 mb-2" onclick="testLocalConnection()">
+                                                    <i class="bi bi-house me-2"></i>Probar IP Local
+                                                </button>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <button type="button" class="btn btn-outline-success w-100 mb-2" onclick="testPublicConnection()">
+                                                    <i class="bi bi-globe me-2"></i>Probar IP Pública
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Save Button -->
+                                    <div class="d-flex justify-content-between">
+                                        <button type="button" class="btn btn-secondary" onclick="resetNetworkSettings()">
+                                            <i class="bi bi-arrow-clockwise me-2"></i>Restablecer
+                                        </button>
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="bi bi-check-circle me-2"></i>Guardar Configuración
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <!-- Current Status -->
+                                <div class="card mb-4">
+                                    <div class="card-header">
+                                        <h5 class="card-title mb-0">
+                                            <i class="bi bi-info-circle me-2"></i>Estado Actual
+                                        </h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="mb-3">
+                                            <strong>IP Local:</strong>
+                                            <div id="currentLocalIp" class="text-muted">{{ settings.local_ip|default:'No configurada' }}</div>
+                                        </div>
+                                        <div class="mb-3">
+                                            <strong>IP Pública:</strong>
+                                            <div id="currentPublicIp" class="text-muted">{{ settings.public_ip|default:'No configurada' }}</div>
+                                        </div>
+                                        <div class="mb-3">
+                                            <strong>Puerto:</strong>
+                                            <div id="currentPort" class="text-muted">{{ settings.port|default:'8000' }}</div>
+                                        </div>
+                                        <div class="mb-3">
+                                            <strong>Modo:</strong>
+                                            <div id="currentMode" class="text-muted">
+                                                {% if settings.detection_mode == 'auto' or not settings.detection_mode %}
+                                                    Automático
+                                                {% else %}
+                                                    Manual
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Quick Actions -->
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h5 class="card-title mb-0">
+                                            <i class="bi bi-lightning me-2"></i>Acciones Rápidas
+                                        </h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="d-grid gap-2">
+                                            <button class="btn btn-outline-primary" onclick="detectLocalIp()">
+                                                <i class="bi bi-search me-2"></i>Detectar IP Local
+                                            </button>
+                                            <button class="btn btn-outline-info" onclick="generateKioskUrl()">
+                                                <i class="bi bi-link me-2"></i>Generar URL de Kiosko
+                                            </button>
+                                            <button class="btn btn-outline-warning" onclick="testAllConnections()">
+                                                <i class="bi bi-connection me-2"></i>Probar Todas las Conexiones
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Kiosk Configuration Tab -->
+                    <div class="tab-pane fade" id="kiosk" role="tabpanel">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <form id="kioskSettingsForm">
+                                    {% csrf_token %}
+                                    
+                                    <!-- Kiosk General Settings -->
+                                    <div class="mb-4">
+                                        <h5><i class="bi bi-display me-2"></i>Configuración General de Kioskos</h5>
+                                        
+                                        <!-- Auto-refresh -->
+                                        <div class="mb-3">
+                                            <label class="form-label">
+                                                <i class="bi bi-arrow-clockwise me-2"></i>Auto-refresh
+                                            </label>
+                                            <div class="form-check form-switch">
+                                                <input class="form-check-input" type="checkbox" id="autoRefresh" 
+                                                       {% if settings.kiosk_auto_refresh %}checked{% endif %}>
+                                                <label class="form-check-label" for="autoRefresh">
+                                                    Habilitar auto-refresh de la página
+                                                </label>
+                                            </div>
+                                            <div class="form-text">Actualiza automáticamente la página del kiosko</div>
+                                        </div>
+                                        
+                                        <!-- Refresh Interval -->
+                                        <div class="mb-3">
+                                            <label for="refreshInterval" class="form-label">
+                                                <i class="bi bi-clock me-2"></i>Intervalo de Refresh (segundos)
+                                            </label>
+                                            <input type="number" class="form-control" id="refreshInterval" 
+                                                   value="{{ settings.kiosk_refresh_interval|default:'30' }}" min="10" max="300">
+                                            <div class="form-text">Intervalo en segundos para el auto-refresh (10-300 segundos)</div>
+                                        </div>
+                                        
+                                        <!-- Sound Notifications -->
+                                        <div class="mb-3">
+                                            <label class="form-label">
+                                                <i class="bi bi-volume-up me-2"></i>Notificaciones de Sonido
+                                            </label>
+                                            <div class="form-check form-switch">
+                                                <input class="form-check-input" type="checkbox" id="soundNotifications" 
+                                                       {% if settings.kiosk_sound_notifications %}checked{% endif %}>
+                                                <label class="form-check-label" for="soundNotifications">
+                                                    Habilitar notificaciones de sonido
+                                                </label>
+                                            </div>
+                                            <div class="form-text">Reproduce sonidos cuando se genera un nuevo ticket</div>
+                                        </div>
+                                        
+                                        <!-- Welcome Message -->
+                                        <div class="mb-3">
+                                            <label for="welcomeMessage" class="form-label">
+                                                <i class="bi bi-chat-text me-2"></i>Mensaje de Bienvenida
+                                            </label>
+                                            <textarea class="form-control" id="welcomeMessage" rows="3" 
+                                                      placeholder="Bienvenido al sistema de tickets">{{ settings.kiosk_welcome_message|default:'' }}</textarea>
+                                            <div class="form-text">Mensaje que se muestra en la pantalla de bienvenida del kiosko</div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Save Button -->
+                                    <div class="d-flex justify-content-end">
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="bi bi-check-circle me-2"></i>Guardar Configuración
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <!-- Kiosk Preview -->
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h5 class="card-title mb-0">
+                                            <i class="bi bi-eye me-2"></i>Vista Previa del Kiosko
+                                        </h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="kiosk-preview">
+                                            <div class="preview-header">
+                                                <h6>Bienvenido al Sistema de Tickets</h6>
+                                                <p class="text-muted small" id="previewWelcomeMessage">
+                                                    {{ settings.kiosk_welcome_message|default:'Seleccione una categoría para generar su ticket' }}
+                                                </p>
+                                            </div>
+                                            <div class="preview-categories">
+                                                <div class="preview-category">
+                                                    <i class="bi bi-tools"></i>
+                                                    <span>Mantenimiento</span>
+                                                </div>
+                                                <div class="preview-category">
+                                                    <i class="bi bi-question-circle"></i>
+                                                    <span>Consultas</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- General Configuration Tab -->
+                    <div class="tab-pane fade" id="general" role="tabpanel">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <form id="generalSettingsForm">
+                                    {% csrf_token %}
+                                    
+                                    <!-- System Information -->
+                                    <div class="mb-4">
+                                        <h5><i class="bi bi-info-circle me-2"></i>Información del Sistema</h5>
+                                        
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label class="form-label">Nombre del Sistema</label>
+                                                    <input type="text" class="form-control" value="ServiceNow Kiosk System" readonly>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label class="form-label">Versión</label>
+                                                    <input type="text" class="form-control" value="1.0.0" readonly>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label class="form-label">Empresa</label>
+                                                    <input type="text" class="form-control" value="{{ company.name }}" readonly>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label class="form-label">Fecha de Instalación</label>
+                                                    <input type="text" class="form-control" value="{{ settings.installation_date|default:'N/A' }}" readonly>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Maintenance Mode -->
+                                    <div class="mb-4">
+                                        <h5><i class="bi bi-wrench me-2"></i>Modo de Mantenimiento</h5>
+                                        
+                                        <div class="alert alert-warning">
+                                            <i class="bi bi-exclamation-triangle me-2"></i>
+                                            <strong>Advertencia:</strong> El modo de mantenimiento deshabilitará el acceso a kioskos.
+                                        </div>
+                                        
+                                        <div class="form-check form-switch">
+                                            <input class="form-check-input" type="checkbox" id="maintenanceMode" 
+                                                   {% if settings.maintenance_mode %}checked{% endif %}>
+                                            <label class="form-check-label" for="maintenanceMode">
+                                                Habilitar modo de mantenimiento
+                                            </label>
+                                        </div>
+                                        
+                                        <div class="mb-3 mt-3">
+                                            <label for="maintenanceMessage" class="form-label">Mensaje de Mantenimiento</label>
+                                            <textarea class="form-control" id="maintenanceMessage" rows="3" 
+                                                      placeholder="Sistema en mantenimiento. Volveremos pronto.">{{ settings.maintenance_message|default:'' }}</textarea>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Save Button -->
+                                    <div class="d-flex justify-content-end">
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="bi bi-check-circle me-2"></i>Guardar Configuración
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <!-- System Status -->
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h5 class="card-title mb-0">
+                                            <i class="bi bi-activity me-2"></i>Estado del Sistema
+                                        </h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="mb-3">
+                                            <strong>Estado:</strong>
+                                            <span class="badge bg-success">Operativo</span>
+                                        </div>
+                                        <div class="mb-3">
+                                            <strong>Última Verificación:</strong>
+                                            <div class="text-muted">{{ settings.last_check|default:'N/A' }}</div>
+                                        </div>
+                                        <div class="mb-3">
+                                            <strong>Kioskos Activos:</strong>
+                                            <div class="text-muted">{{ settings.active_kiosks|default:'0' }}</div>
+                                        </div>
+                                        <div class="mb-3">
+                                            <strong>Tickets Hoy:</strong>
+                                            <div class="text-muted">{{ settings.tickets_today|default:'0' }}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Test Results Modal -->
+<div class="modal fade" id="testResultsModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-connection me-2"></i>Resultados de Prueba
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="testResults">
+                    <!-- Test results will be displayed here -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+{{ block.super }}
+<style>
+    .breadcrumb {
+        background: var(--neutral-light);
+        border-radius: 10px;
+        padding: 1rem 1.5rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .breadcrumb-item a {
+        color: var(--primary-dark);
+        text-decoration: none;
+    }
+    
+    .breadcrumb-item.active {
+        color: var(--neutral-gray);
+    }
+    
+    .card {
+        border-radius: 15px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        border: 1px solid rgba(0,0,0,0.05);
+    }
+    
+    .card-header {
+        background: linear-gradient(135deg, var(--primary-light) 0%, var(--primary-dark) 100%);
+        color: var(--neutral-light);
+        border-radius: 15px 15px 0 0 !important;
+        border: none;
+    }
+    
+    .nav-tabs .nav-link {
+        border: none;
+        color: var(--neutral-light);
+        border-radius: 0;
+        padding: 1rem 1.5rem;
+        transition: all 0.3s ease;
+    }
+    
+    .nav-tabs .nav-link:hover {
+        background-color: rgba(255,255,255,0.1);
+        border: none;
+    }
+    
+    .nav-tabs .nav-link.active {
+        background-color: rgba(255,255,255,0.2);
+        border: none;
+        color: var(--neutral-light);
+    }
+    
+    .form-label {
+        font-weight: 600;
+        color: var(--primary-dark);
+        margin-bottom: 0.5rem;
+    }
+    
+    .form-control, .form-select {
+        border-radius: 10px;
+        border: 2px solid var(--neutral-gray);
+        transition: all 0.3s ease;
+        padding: 0.75rem 1rem;
+    }
+    
+    .form-control:focus, .form-select:focus {
+        border-color: var(--primary-dark);
+        box-shadow: 0 0 0 0.2rem rgba(var(--primary-dark-rgb), 0.25);
+        transform: translateY(-1px);
+    }
+    
+    .form-check-input:checked {
+        background-color: var(--primary-dark);
+        border-color: var(--primary-dark);
+    }
+    
+    .btn {
+        border-radius: 10px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        padding: 0.75rem 1.5rem;
+    }
+    
+    .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    }
+    
+    .alert {
+        border-radius: 10px;
+        border: none;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .kiosk-preview {
+        background: var(--neutral-light);
+        border-radius: 10px;
+        padding: 1.5rem;
+        border: 2px dashed var(--neutral-gray);
+    }
+    
+    .preview-header {
+        text-align: center;
+        margin-bottom: 1.5rem;
+    }
+    
+    .preview-categories {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+    }
+    
+    .preview-category {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 1rem;
+        background: var(--primary-light);
+        border-radius: 10px;
+        color: var(--neutral-light);
+        transition: all 0.3s ease;
+    }
+    
+    .preview-category:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    }
+    
+    .preview-category i {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .form-text {
+        color: var(--neutral-gray);
+        font-size: 0.85rem;
+        margin-top: 0.25rem;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<script>
+// Network Settings Form
+document.getElementById('networkSettingsForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = {
+        local_ip: document.getElementById('localIp').value,
+        public_ip: document.getElementById('publicIp').value,
+        port: document.getElementById('port').value,
+        detection_mode: document.querySelector('input[name="detectionMode"]:checked').value
+    };
+    
+    saveNetworkSettings(formData);
+});
+
+// Kiosk Settings Form
+document.getElementById('kioskSettingsForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = {
+        kiosk_auto_refresh: document.getElementById('autoRefresh').checked,
+        kiosk_refresh_interval: document.getElementById('refreshInterval').value,
+        kiosk_sound_notifications: document.getElementById('soundNotifications').checked,
+        kiosk_welcome_message: document.getElementById('welcomeMessage').value
+    };
+    
+    saveKioskSettings(formData);
+});
+
+// General Settings Form
+document.getElementById('generalSettingsForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = {
+        maintenance_mode: document.getElementById('maintenanceMode').checked,
+        maintenance_message: document.getElementById('maintenanceMessage').value
+    };
+    
+    saveGeneralSettings(formData);
+});
+
+// Update welcome message preview
+document.getElementById('welcomeMessage').addEventListener('input', function() {
+    document.getElementById('previewWelcomeMessage').textContent = this.value || 'Seleccione una categoría para generar su ticket';
+});
+
+// Functions
+function saveNetworkSettings(data) {
+    fetch('{% url "CPdashadmin:save_network_settings" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification('Configuración de red guardada exitosamente', 'success');
+            updateCurrentStatus();
+        } else {
+            showNotification('Error: ' + data.message, 'danger');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('Error al guardar la configuración', 'danger');
+    });
+}
+
+function saveKioskSettings(data) {
+    fetch('{% url "CPdashadmin:save_kiosk_settings" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification('Configuración de kioskos guardada exitosamente', 'success');
+        } else {
+            showNotification('Error: ' + data.message, 'danger');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('Error al guardar la configuración', 'danger');
+    });
+}
+
+function saveGeneralSettings(data) {
+    fetch('{% url "CPdashadmin:save_general_settings" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification('Configuración general guardada exitosamente', 'success');
+        } else {
+            showNotification('Error: ' + data.message, 'danger');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('Error al guardar la configuración', 'danger');
+    });
+}
+
+function testLocalConnection() {
+    const localIp = document.getElementById('localIp').value;
+    if (!localIp) {
+        showNotification('Configura una IP local primero', 'warning');
+        return;
+    }
+    
+    showNotification('Probando conexión local...', 'info');
+    
+    fetch(`http://${localIp}/api/health/`, {
+        method: 'GET',
+        timeout: 5000
+    })
+    .then(response => {
+        if (response.ok) {
+            showNotification('Conexión local exitosa', 'success');
+        } else {
+            showNotification('Conexión local fallida', 'danger');
+        }
+    })
+    .catch(error => {
+        showNotification('Error en conexión local: ' + error.message, 'danger');
+    });
+}
+
+function testPublicConnection() {
+    const publicIp = document.getElementById('publicIp').value;
+    if (!publicIp) {
+        showNotification('Configura una IP pública primero', 'warning');
+        return;
+    }
+    
+    showNotification('Probando conexión pública...', 'info');
+    
+    fetch(`https://${publicIp}/api/health/`, {
+        method: 'GET',
+        timeout: 5000
+    })
+    .then(response => {
+        if (response.ok) {
+            showNotification('Conexión pública exitosa', 'success');
+        } else {
+            showNotification('Conexión pública fallida', 'danger');
+        }
+    })
+    .catch(error => {
+        showNotification('Error en conexión pública: ' + error.message, 'danger');
+    });
+}
+
+function detectLocalIp() {
+    showNotification('Detectando IP local...', 'info');
+    
+    fetch('{% url "CPdashadmin:detect_local_ip" %}', {
+        method: 'GET',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            document.getElementById('localIp').value = data.local_ip;
+            showNotification('IP local detectada: ' + data.local_ip, 'success');
+        } else {
+            showNotification('Error al detectar IP local', 'danger');
+        }
+    })
+    .catch(error => {
+        showNotification('Error al detectar IP local', 'danger');
+    });
+}
+
+function generateKioskUrl() {
+    const localIp = document.getElementById('localIp').value;
+    const publicIp = document.getElementById('publicIp').value;
+    const port = document.getElementById('port').value;
+    
+    let url = '';
+    if (localIp) {
+        url = `http://${localIp}/kiosk/`;
+    } else if (publicIp) {
+        url = `https://${publicIp}/kiosk/`;
+    } else {
+        showNotification('Configura una IP primero', 'warning');
+        return;
+    }
+    
+    // Copy to clipboard
+    navigator.clipboard.writeText(url).then(() => {
+        showNotification('URL del kiosko copiada al portapapeles: ' + url, 'success');
+    }).catch(() => {
+        showNotification('URL del kiosko: ' + url, 'info');
+    });
+}
+
+function testAllConnections() {
+    showNotification('Probando todas las conexiones...', 'info');
+    
+    const results = [];
+    
+    // Test local connection
+    const localIp = document.getElementById('localIp').value;
+    if (localIp) {
+        fetch(`http://${localIp}/api/health/`)
+        .then(response => {
+            results.push({ type: 'Local', success: response.ok });
+        })
+        .catch(() => {
+            results.push({ type: 'Local', success: false });
+        });
+    }
+    
+    // Test public connection
+    const publicIp = document.getElementById('publicIp').value;
+    if (publicIp) {
+        fetch(`https://${publicIp}/api/health/`)
+        .then(response => {
+            results.push({ type: 'Pública', success: response.ok });
+        })
+        .catch(() => {
+            results.push({ type: 'Pública', success: false });
+        });
+    }
+    
+    // Show results after a delay
+    setTimeout(() => {
+        showTestResults(results);
+    }, 3000);
+}
+
+function showTestResults(results) {
+    const modal = document.getElementById('testResultsModal');
+    const resultsDiv = document.getElementById('testResults');
+    
+    let html = '<div class="row">';
+    results.forEach(result => {
+        html += `
+            <div class="col-md-6 mb-3">
+                <div class="alert alert-${result.success ? 'success' : 'danger'}">
+                    <i class="bi bi-${result.success ? 'check-circle' : 'x-circle'} me-2"></i>
+                    <strong>${result.type}:</strong> ${result.success ? 'Conectado' : 'Sin conexión'}
+                </div>
+            </div>
+        `;
+    });
+    html += '</div>';
+    
+    resultsDiv.innerHTML = html;
+    
+    const bootstrapModal = new bootstrap.Modal(modal);
+    bootstrapModal.show();
+}
+
+function resetNetworkSettings() {
+    if (confirm('¿Estás seguro de que quieres restablecer la configuración de red?')) {
+        document.getElementById('localIp').value = '';
+        document.getElementById('publicIp').value = '';
+        document.getElementById('port').value = '8000';
+        document.getElementById('autoMode').checked = true;
+        showNotification('Configuración restablecida', 'info');
+    }
+}
+
+function updateCurrentStatus() {
+    document.getElementById('currentLocalIp').textContent = document.getElementById('localIp').value || 'No configurada';
+    document.getElementById('currentPublicIp').textContent = document.getElementById('publicIp').value || 'No configurada';
+    document.getElementById('currentPort').textContent = document.getElementById('port').value || '8000';
+    document.getElementById('currentMode').textContent = document.querySelector('input[name="detectionMode"]:checked').value === 'auto' ? 'Automático' : 'Manual';
+}
+
+function showNotification(message, type = 'info') {
+    const notification = document.createElement('div');
+    notification.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+    notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    notification.innerHTML = `
+        <i class="bi bi-${type === 'info' ? 'info-circle' : type === 'warning' ? 'exclamation-triangle' : type === 'danger' ? 'x-circle' : 'check-circle'} me-2"></i>
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.remove();
+        }
+    }, 5000);
+}
+</script>
+{% endblock %}

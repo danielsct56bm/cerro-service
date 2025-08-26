@@ -1,0 +1,495 @@
+{% extends 'CPdashadmin/base_admin.html' %}
+
+{% block admin_title %}Detalles de Categoría - {{ category.name }}{% endblock %}
+
+{% block content_title %}{{ category.name }}{% endblock %}
+{% block content_subtitle %}Detalles y estadísticas de la categoría{% endblock %}
+
+{% block admin_content %}
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb" class="mb-4">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item">
+            <a href="{% url 'CPdashadmin:dashboard' %}">
+                <i class="bi bi-house"></i> Dashboard
+            </a>
+        </li>
+        <li class="breadcrumb-item">
+            <a href="{% url 'CPdashadmin:ticket_categories_management' %}">
+                <i class="bi bi-folder"></i> Categorías
+            </a>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">
+            <i class="bi bi-{{ category.icon }}" style="color: {{ category.color }};"></i> {{ category.name }}
+        </li>
+    </ol>
+</nav>
+
+<!-- Category Info Card -->
+<div class="row mb-4">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-{{ category.icon }}" style="color: {{ category.color }};"></i>
+                    Información de la Categoría
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6><i class="bi bi-tag me-2"></i>Nombre</h6>
+                        <p class="text-muted">{{ category.name }}</p>
+                        
+                        <h6><i class="bi bi-text-paragraph me-2"></i>Descripción</h6>
+                        <p class="text-muted">{{ category.description|default:"Sin descripción" }}</p>
+                        
+                        <h6><i class="bi bi-emoji-smile me-2"></i>Icono</h6>
+                        <p class="text-muted">{{ category.icon }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6><i class="bi bi-palette me-2"></i>Color</h6>
+                        <div class="d-flex align-items-center">
+                            <div class="color-preview me-2" style="background-color: {{ category.color }}; width: 20px; height: 20px; border-radius: 50%;"></div>
+                            <span class="text-muted">{{ category.color }}</span>
+                        </div>
+                        
+                        <h6><i class="bi bi-toggle-on me-2"></i>Estado</h6>
+                        {% if category.is_active %}
+                            <span class="badge bg-success">
+                                <i class="bi bi-check-circle me-1"></i>Activa
+                            </span>
+                        {% else %}
+                            <span class="badge bg-secondary">
+                                <i class="bi bi-x-circle me-1"></i>Inactiva
+                            </span>
+                        {% endif %}
+                        
+                        <h6><i class="bi bi-calendar me-2"></i>Fecha Creación</h6>
+                        <p class="text-muted">{{ category.created_at|date:"d/m/Y H:i" }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <!-- Action Buttons -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-gear me-2"></i>Acciones
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{% url 'CPdashadmin:edit_ticket_category' category.id %}" class="btn btn-warning">
+                        <i class="bi bi-pencil me-2"></i>Editar Categoría
+                    </a>
+                    <a href="{% url 'CPdashadmin:create_ticket_subcategory' %}?category_id={{ category.id }}" class="btn btn-success">
+                        <i class="bi bi-plus-circle me-2"></i>Agregar Subcategoría
+                    </a>
+                    <a href="{% url 'CPdashadmin:manage_category_templates' category.id %}" class="btn btn-info">
+                        <i class="bi bi-file-earmark-text me-2"></i>Gestionar Plantillas
+                    </a>
+                    <a href="{% url 'CPdashadmin:ticket_categories_management' %}" class="btn btn-secondary">
+                        <i class="bi bi-arrow-left me-2"></i>Volver a Categorías
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Stats Cards -->
+<div class="stats-row mb-4">
+    <div class="row">
+        <div class="col-md-3">
+            <div class="stat-card-small">
+                <div class="stat-icon-small">
+                    <i class="bi bi-ticket-detailed"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-number">{{ total_tickets }}</div>
+                    <div class="stat-label">Total Tickets</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card-small">
+                <div class="stat-icon-small">
+                    <i class="bi bi-clock"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-number">{{ open_tickets }}</div>
+                    <div class="stat-label">Tickets Abiertos</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card-small">
+                <div class="stat-icon-small">
+                    <i class="bi bi-arrow-clockwise"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-number">{{ in_progress_tickets }}</div>
+                    <div class="stat-label">En Progreso</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card-small">
+                <div class="stat-icon-small">
+                    <i class="bi bi-check-circle"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-number">{{ closed_tickets }}</div>
+                    <div class="stat-label">Cerrados</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Content Tabs -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <ul class="nav nav-tabs card-header-tabs" id="categoryTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="subcategories-tab" data-bs-toggle="tab" data-bs-target="#subcategories" type="button" role="tab">
+                            <i class="bi bi-tags me-2"></i>Subcategorías ({{ subcategories.count }})
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="templates-tab" data-bs-toggle="tab" data-bs-target="#templates" type="button" role="tab">
+                            <i class="bi bi-file-earmark-text me-2"></i>Plantillas ({{ templates.count }})
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="tickets-tab" data-bs-toggle="tab" data-bs-target="#tickets" type="button" role="tab">
+                            <i class="bi bi-ticket-detailed me-2"></i>Tickets Recientes ({{ tickets.count }})
+                        </button>
+                    </li>
+                </ul>
+            </div>
+            <div class="card-body">
+                <div class="tab-content" id="categoryTabsContent">
+                    <!-- Subcategorías Tab -->
+                    <div class="tab-pane fade show active" id="subcategories" role="tabpanel">
+                        {% if subcategories %}
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Nombre</th>
+                                            <th>Icono</th>
+                                            <th>Color</th>
+                                            <th>Estado</th>
+                                            <th>Fecha Creación</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for subcategory in subcategories %}
+                                        <tr>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    <i class="bi bi-{{ subcategory.icon }}" style="color: {{ subcategory.color }}; margin-right: 0.5rem;"></i>
+                                                    <strong>{{ subcategory.name }}</strong>
+                                                </div>
+                                            </td>
+                                            <td>{{ subcategory.icon }}</td>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    <div class="color-preview me-2" style="background-color: {{ subcategory.color }}; width: 16px; height: 16px; border-radius: 50%;"></div>
+                                                    {{ subcategory.color }}
+                                                </div>
+                                            </td>
+                                            <td>
+                                                {% if subcategory.is_active %}
+                                                    <span class="badge bg-success">Activa</span>
+                                                {% else %}
+                                                    <span class="badge bg-secondary">Inactiva</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>{{ subcategory.created_at|date:"d/m/Y H:i" }}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% else %}
+                            <div class="text-center text-muted py-4">
+                                <i class="bi bi-tags display-4 mb-3"></i>
+                                <h5>No hay subcategorías</h5>
+                                <p>Esta categoría no tiene subcategorías registradas.</p>
+                                <a href="{% url 'CPdashadmin:create_ticket_subcategory' %}?category_id={{ category.id }}" class="btn btn-primary">
+                                    <i class="bi bi-plus-circle me-2"></i>Crear Subcategoría
+                                </a>
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Plantillas Tab -->
+                    <div class="tab-pane fade" id="templates" role="tabpanel">
+                        {% if templates %}
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Nombre</th>
+                                            <th>Tema</th>
+                                            <th>Estado</th>
+                                            <th>Fecha Creación</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for template in templates %}
+                                        <tr>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    <i class="bi bi-file-earmark-text me-2"></i>
+                                                    <strong>{{ template.name }}</strong>
+                                                </div>
+                                            </td>
+                                            <td>{{ template.theme }}</td>
+                                            <td>
+                                                {% if template.is_active %}
+                                                    <span class="badge bg-success">Activa</span>
+                                                {% else %}
+                                                    <span class="badge bg-secondary">Inactiva</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>{{ template.created_at|date:"d/m/Y H:i" }}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% else %}
+                            <div class="text-center text-muted py-4">
+                                <i class="bi bi-file-earmark-text display-4 mb-3"></i>
+                                <h5>No hay plantillas</h5>
+                                <p>Esta categoría no tiene plantillas registradas.</p>
+                                <a href="{% url 'CPdashadmin:create_ticket_template' %}?category_id={{ category.id }}" class="btn btn-primary">
+                                    <i class="bi bi-plus-circle me-2"></i>Crear Plantilla
+                                </a>
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Tickets Tab -->
+                    <div class="tab-pane fade" id="tickets" role="tabpanel">
+                        {% if tickets %}
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Código</th>
+                                            <th>Solicitante</th>
+                                            <th>Estado</th>
+                                            <th>Prioridad</th>
+                                            <th>Fecha Creación</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for ticket in tickets %}
+                                        <tr>
+                                            <td>
+                                                <strong>{{ ticket.code }}</strong>
+                                            </td>
+                                            <td>{{ ticket.requester.get_full_name|default:ticket.requester.username }}</td>
+                                            <td>
+                                                {% if ticket.status == 'open' %}
+                                                    <span class="badge bg-primary">Abierto</span>
+                                                {% elif ticket.status == 'in_progress' %}
+                                                    <span class="badge bg-warning">En Progreso</span>
+                                                {% elif ticket.status == 'resolved' %}
+                                                    <span class="badge bg-success">Resuelto</span>
+                                                {% elif ticket.status == 'closed' %}
+                                                    <span class="badge bg-secondary">Cerrado</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if ticket.priority == 'low' %}
+                                                    <span class="badge bg-info">Baja</span>
+                                                {% elif ticket.priority == 'normal' %}
+                                                    <span class="badge bg-primary">Normal</span>
+                                                {% elif ticket.priority == 'high' %}
+                                                    <span class="badge bg-warning">Alta</span>
+                                                {% elif ticket.priority == 'urgent' %}
+                                                    <span class="badge bg-danger">Urgente</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>{{ ticket.created_at|date:"d/m/Y H:i" }}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="text-center mt-3">
+                                <a href="{% url 'CPdashadmin:ticket_management' %}?category={{ category.id }}" class="btn btn-primary">
+                                    <i class="bi bi-eye me-2"></i>Ver Todos los Tickets
+                                </a>
+                            </div>
+                        {% else %}
+                            <div class="text-center text-muted py-4">
+                                <i class="bi bi-ticket-detailed display-4 mb-3"></i>
+                                <h5>No hay tickets</h5>
+                                <p>Esta categoría no tiene tickets registrados.</p>
+                                <a href="{% url 'CPdashadmin:create_ticket' %}?category_id={{ category.id }}" class="btn btn-primary">
+                                    <i class="bi bi-plus-circle me-2"></i>Crear Ticket
+                                </a>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+{{ block.super }}
+<style>
+    .breadcrumb {
+        background: var(--neutral-light);
+        border-radius: 10px;
+        padding: 1rem 1.5rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .breadcrumb-item a {
+        color: var(--primary-dark);
+        text-decoration: none;
+    }
+    
+    .breadcrumb-item.active {
+        color: var(--neutral-gray);
+    }
+    
+    .card {
+        border-radius: 15px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        border: 1px solid rgba(0,0,0,0.05);
+    }
+    
+    .card-header {
+        background: linear-gradient(135deg, var(--primary-light) 0%, var(--primary-dark) 100%);
+        color: var(--neutral-light);
+        border-radius: 15px 15px 0 0 !important;
+        border: none;
+    }
+    
+    .nav-tabs .nav-link {
+        border: none;
+        color: var(--neutral-light);
+        border-radius: 0;
+        padding: 1rem 1.5rem;
+        transition: all 0.3s ease;
+    }
+    
+    .nav-tabs .nav-link:hover {
+        background-color: rgba(255,255,255,0.1);
+        border: none;
+    }
+    
+    .nav-tabs .nav-link.active {
+        background-color: rgba(255,255,255,0.2);
+        border: none;
+        color: var(--neutral-light);
+    }
+    
+    .stats-row {
+        margin-bottom: 2rem;
+    }
+    
+    .stat-card-small {
+        background: var(--neutral-light);
+        border-radius: 15px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        display: flex;
+        align-items: center;
+        transition: all 0.3s ease;
+        border: 1px solid rgba(0,0,0,0.05);
+    }
+    
+    .stat-card-small:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    }
+    
+    .stat-icon-small {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--primary-light) 0%, var(--primary-dark) 100%);
+        color: var(--neutral-light);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 1rem;
+        font-size: 1.5rem;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    }
+    
+    .stat-content {
+        flex: 1;
+    }
+    
+    .stat-number {
+        font-size: 2rem;
+        font-weight: bold;
+        color: var(--primary-dark);
+        margin-bottom: 0.25rem;
+        line-height: 1;
+    }
+    
+    .stat-label {
+        font-size: 0.85rem;
+        color: var(--neutral-gray);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-weight: 600;
+    }
+    
+    .color-preview {
+        border: 1px solid rgba(0,0,0,0.1);
+    }
+    
+    .table {
+        background: var(--neutral-light);
+        border-radius: 10px;
+        overflow: hidden;
+    }
+    
+    .table thead th {
+        background: var(--primary-light);
+        color: var(--neutral-light);
+        border: none;
+        font-weight: 600;
+    }
+    
+    .badge {
+        font-size: 0.75rem;
+        padding: 0.5rem 0.75rem;
+        border-radius: 8px;
+        font-weight: 600;
+    }
+    
+    .btn {
+        border-radius: 10px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        padding: 0.75rem 1.5rem;
+    }
+    
+    .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    }
+</style>
+{% endblock %}

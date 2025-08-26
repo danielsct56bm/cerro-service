@@ -1,0 +1,147 @@
+<!-- Sidebar -->
+<div class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <h4>Administración</h4>
+        <button class="sidebar-toggle" id="sidebarToggle" type="button" title="Colapsar/Expandir Sidebar">
+            <i class="bi bi-chevron-left"></i>
+        </button>
+    </div>
+    
+    <ul class="sidebar-nav">
+        <!-- Dashboard -->
+        <li>
+            <a href="{% url 'CPdashadmin:dashboard' %}" class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+                <i class="bi bi-speedometer2"></i>
+                <span class="nav-text">Dashboard</span>
+            </a>
+        </li>
+        
+        <!-- Users Section -->
+        <li class="nav-section">
+            <div class="nav-section-header" data-title="Usuarios">
+                <i class="bi bi-people"></i>
+                <span class="nav-text">Usuarios</span>
+                <i class="bi bi-chevron-down section-toggle"></i>
+            </div>
+            <ul class="nav-section-items">
+                <li>
+                    <a href="{% url 'CPdashadmin:user_management' %}" class="{% if 'user_management' in request.resolver_match.url_name %}active{% endif %}">
+                        <i class="bi bi-list-ul"></i>
+                        <span class="nav-text">Gestión de Usuarios</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{% url 'CPdashadmin:user_create' %}" class="{% if 'user_create' in request.resolver_match.url_name %}active{% endif %}">
+                        <i class="bi bi-person-plus"></i>
+                        <span class="nav-text">Crear Usuario</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{% url 'CPdashadmin:role_management' %}" class="{% if 'role_management' in request.resolver_match.url_name %}active{% endif %}">
+                        <i class="bi bi-shield"></i>
+                        <span class="nav-text">Gestión de Roles</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{% url 'CPdashadmin:permission_management' %}" class="{% if 'permission_management' in request.resolver_match.url_name %}active{% endif %}">
+                        <i class="bi bi-key"></i>
+                        <span class="nav-text">Permisos</span>
+                    </a>
+                </li>
+            </ul>
+        </li>
+        
+        <!-- Services Section -->
+        <li class="nav-section">
+            <div class="nav-section-header" data-title="Servicios">
+                <i class="bi bi-gear"></i>
+                <span class="nav-text">Servicios</span>
+                <i class="bi bi-chevron-down section-toggle"></i>
+            </div>
+            <ul class="nav-section-items">
+                <li>
+                    <a href="{% url 'CPdashadmin:ticket_management' %}" class="{% if 'ticket_management' in request.resolver_match.url_name %}active{% endif %}">
+                        <i class="bi bi-ticket-detailed"></i>
+                        <span class="nav-text">Gestión de Tickets</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{% url 'CPdashadmin:ticket_categories_management' %}" class="{% if 'ticket_categories_management' in request.resolver_match.url_name %}active{% endif %}">
+                        <i class="bi bi-folder"></i>
+                        <span class="nav-text">Categorías de Tickets</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{% url 'CPdashadmin:kiosk_management' %}" class="{% if 'kiosk_management' in request.resolver_match.url_name %}active{% endif %}">
+                        <i class="bi bi-display"></i>
+                        <span class="nav-text">Gestión de Kiosks</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{% url 'CPdashadmin:display_management' %}" class="{% if 'display_management' in request.resolver_match.url_name %}active{% endif %}">
+                        <i class="bi bi-tv"></i>
+                        <span class="nav-text">Gestión de Displays</span>
+                    </a>
+                </li>
+            </ul>
+        </li>
+        
+        <!-- Reports Section -->
+        <li class="nav-section">
+            <div class="nav-section-header" data-title="Reportes">
+                <i class="bi bi-bar-chart"></i>
+                <span class="nav-text">Reportes</span>
+                <i class="bi bi-chevron-down section-toggle"></i>
+            </div>
+            <ul class="nav-section-items">
+                <li>
+                    <a href="{% url 'CPdashadmin:reports' %}" class="{% if 'reports' in request.resolver_match.url_name %}active{% endif %}">
+                        <i class="bi bi-graph-up"></i>
+                        <span class="nav-text">Reportes Generales</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#" class="disabled">
+                        <i class="bi bi-pie-chart"></i>
+                        <span class="nav-text">Reportes de Usuarios</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#" class="disabled">
+                        <i class="bi bi-graph-up-arrow"></i>
+                        <span class="nav-text">Reportes de Tickets</span>
+                    </a>
+                </li>
+            </ul>
+        </li>
+        
+        <!-- Settings Section -->
+        <li class="nav-section">
+            <div class="nav-section-header" data-title="Configuración">
+                <i class="bi bi-gear-wide-connected"></i>
+                <span class="nav-text">Configuración</span>
+                <i class="bi bi-chevron-down section-toggle"></i>
+            </div>
+            <ul class="nav-section-items">
+                <li>
+                    <a href="{% url 'CPdashadmin:system_settings' %}" class="{% if 'system_settings' in request.resolver_match.url_name %}active{% endif %}">
+                        <i class="bi bi-building"></i>
+                        <span class="nav-text">Configuración del Sistema</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#" class="disabled">
+                        <i class="bi bi-database"></i>
+                        <span class="nav-text">Respaldo y Restauración</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#" class="disabled">
+                        <i class="bi bi-shield-check"></i>
+                        <span class="nav-text">Seguridad</span>
+                    </a>
+                </li>
+            </ul>
+        </li>
+    </ul>
+</div>

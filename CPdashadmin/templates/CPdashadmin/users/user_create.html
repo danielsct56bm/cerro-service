@@ -1,0 +1,253 @@
+{% extends 'CPdashadmin/base_admin.html' %}
+
+{% block admin_title %}Crear Usuario{% endblock %}
+
+{% block content_title %}Crear Nuevo Usuario{% endblock %}
+{% block content_subtitle %}Agregar un nuevo usuario al sistema{% endblock %}
+
+{% block admin_content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-person-plus"></i> Información del Usuario
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    
+                    <div class="row">
+                        <!-- Información Personal -->
+                        <div class="col-md-6">
+                            <h6 class="text-muted mb-3">Información Personal</h6>
+                            
+                            <div class="mb-3">
+                                <label for="username" class="form-label">Nombre de Usuario *</label>
+                                <input type="text" class="form-control" id="username" name="username" required>
+                                <div class="form-text">Debe ser único en el sistema</div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="first_name" class="form-label">Nombre *</label>
+                                <input type="text" class="form-control" id="first_name" name="first_name" required>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="last_name" class="form-label">Apellido *</label>
+                                <input type="text" class="form-control" id="last_name" name="last_name" required>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="email" class="form-label">Email *</label>
+                                <input type="email" class="form-control" id="email" name="email" required>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="employee_number" class="form-label">Número de Empleado</label>
+                                <input type="text" class="form-control" id="employee_number" name="employee_number">
+                                <div class="form-text">Número interno del empleado</div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="sap_id" class="form-label">ID SAP</label>
+                                <input type="text" class="form-control" id="sap_id" name="sap_id">
+                                <div class="form-text">Identificador del sistema SAP</div>
+                            </div>
+                        </div>
+                        
+                        <!-- Configuración de Cuenta -->
+                        <div class="col-md-6">
+                            <h6 class="text-muted mb-3">Configuración de Cuenta</h6>
+                            
+                            <div class="mb-3">
+                                <label for="password" class="form-label">Contraseña *</label>
+                                <input type="password" class="form-control" id="password" name="password" required>
+                                <div class="form-text">Mínimo 8 caracteres</div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="confirm_password" class="form-label">Confirmar Contraseña *</label>
+                                <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="role" class="form-label">Rol *</label>
+                                <select class="form-select" id="role" name="role" required>
+                                    <option value="">Seleccionar rol</option>
+                                    {% for role in roles %}
+                                        <option value="{{ role.id }}">{{ role.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="avatar" class="form-label">Avatar</label>
+                                <input type="file" class="form-control" id="avatar" name="avatar" accept="image/*">
+                                <div class="form-text">Opcional. Formatos: JPG, PNG, GIF</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Configuraciones Adicionales -->
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <h6 class="text-muted mb-3">Configuraciones Adicionales</h6>
+                            
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="is_active" name="is_active" checked>
+                                        <label class="form-check-label" for="is_active">
+                                            Usuario Activo
+                                        </label>
+                                        <div class="form-text">El usuario podrá acceder al sistema</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-4">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="can_access" name="can_access" checked>
+                                        <label class="form-check-label" for="can_access">
+                                            Puede Acceder al Sistema
+                                        </label>
+                                        <div class="form-text">Permitir acceso al sistema</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-4">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="must_change_password" name="must_change_password">
+                                        <label class="form-check-label" for="must_change_password">
+                                            Debe Cambiar Contraseña
+                                        </label>
+                                        <div class="form-text">Forzar cambio en próximo login</div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="row mt-3">
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="send_welcome_email" name="send_welcome_email">
+                                        <label class="form-check-label" for="send_welcome_email">
+                                            Enviar Email de Bienvenida
+                                        </label>
+                                        <div class="form-text">Enviar credenciales por email</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Botones de Acción -->
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <hr>
+                            <div class="d-flex justify-content-between">
+                                <a href="{% url 'CPdashadmin:user_management' %}" class="btn btn-secondary">
+                                    <i class="bi bi-arrow-left"></i> Cancelar
+                                </a>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-check-lg"></i> Crear Usuario
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+{{ block.super }}
+<style>
+    .card {
+        background: var(--content-bg);
+        border: 1px solid var(--border-color);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .card-header {
+        background: var(--primary-dark);
+        color: var(--neutral-light);
+        border-bottom: 1px solid var(--border-color);
+    }
+    
+    .form-control, .form-select {
+        background-color: var(--content-bg);
+        border-color: var(--border-color);
+        color: var(--text-color);
+    }
+    
+    .form-control:focus, .form-select:focus {
+        background-color: var(--content-bg);
+        border-color: var(--primary-light);
+        color: var(--text-color);
+        box-shadow: 0 0 0 0.2rem rgba(var(--bs-primary-rgb), 0.25);
+    }
+    
+    .form-check-input:checked {
+        background-color: var(--primary-dark);
+        border-color: var(--primary-dark);
+    }
+    
+    .form-text {
+        color: var(--neutral-gray);
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form');
+    const password = document.getElementById('password');
+    const confirmPassword = document.getElementById('confirm_password');
+    
+    // Validación de contraseñas
+    function validatePasswords() {
+        if (password.value !== confirmPassword.value) {
+            confirmPassword.setCustomValidity('Las contraseñas no coinciden');
+        } else {
+            confirmPassword.setCustomValidity('');
+        }
+    }
+    
+    password.addEventListener('change', validatePasswords);
+    confirmPassword.addEventListener('keyup', validatePasswords);
+    
+    // Validación de nombre de usuario
+    const username = document.getElementById('username');
+    username.addEventListener('blur', function() {
+        if (username.value.length < 3) {
+            username.setCustomValidity('El nombre de usuario debe tener al menos 3 caracteres');
+        } else {
+            username.setCustomValidity('');
+        }
+    });
+    
+    // Validación de contraseña
+    password.addEventListener('blur', function() {
+        if (password.value.length < 8) {
+            password.setCustomValidity('La contraseña debe tener al menos 8 caracteres');
+        } else {
+            password.setCustomValidity('');
+        }
+    });
+    
+    // Validación del formulario
+    form.addEventListener('submit', function(e) {
+        if (!form.checkValidity()) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+        form.classList.add('was-validated');
+    });
+});
+</script>
+{% endblock %}

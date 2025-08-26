@@ -1,0 +1,222 @@
+{% extends 'CPdashadmin/base_admin.html' %}
+
+{% block admin_title %}Detalles del Usuario{% endblock %}
+
+{% block content_title %}Detalles del Usuario{% endblock %}
+{% block content_subtitle %}Información completa del usuario{% endblock %}
+
+{% block admin_content %}
+<div class="row">
+    <!-- Información Principal -->
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-person-circle"></i> Información Personal
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 text-center mb-3">
+                        {% if user_detail.avatar %}
+                            <img src="{{ user_detail.avatar.url }}" alt="Avatar" class="rounded-circle mb-2" style="width: 100px; height: 100px; object-fit: cover;">
+                        {% else %}
+                            <div class="rounded-circle mb-2 d-flex align-items-center justify-content-center mx-auto" style="width: 100px; height: 100px; background: var(--primary-light); color: var(--neutral-light); font-size: 2rem;">
+                                {{ user_detail.first_name|first|upper }}{{ user_detail.last_name|first|upper }}
+                            </div>
+                        {% endif %}
+                        <div class="d-flex justify-content-center gap-2">
+                            <a href="{% url 'CPdashadmin:user_edit' user_detail.id %}" class="btn btn-sm btn-outline-warning">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            <a href="{% url 'CPdashadmin:user_delete' user_detail.id %}" class="btn btn-sm btn-outline-danger">
+                                <i class="bi bi-trash"></i>
+                            </a>
+                        </div>
+                    </div>
+                    <div class="col-md-9">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p><strong>Nombre:</strong> {{ user_detail.get_full_name }}</p>
+                                <p><strong>Usuario:</strong> {{ user_detail.username }}</p>
+                                <p><strong>Email:</strong> {{ user_detail.email }}</p>
+                                <p><strong>Estado:</strong> 
+                                    {% if user_detail.is_active %}
+                                        <span class="badge bg-success">Activo</span>
+                                    {% else %}
+                                        <span class="badge bg-danger">Inactivo</span>
+                                    {% endif %}
+                                </p>
+                            </div>
+                            <div class="col-md-6">
+                                <p><strong>Cargo:</strong> {{ user_detail.title|default:"No especificado" }}</p>
+                                <p><strong>Departamento:</strong> {{ user_detail.department|default:"No especificado" }}</p>
+                                <p><strong>Ubicación:</strong> {{ user_detail.location|default:"No especificado" }}</p>
+                                <p><strong>Número de Empleado:</strong> {{ user_detail.employee_number|default:"No especificado" }}</p>
+                                <p><strong>ID SAP:</strong> {{ user_detail.sap_id|default:"No especificado" }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Información de Control -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-gear"></i> Configuraciones de Control
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="text-center">
+                            <h6>Estado del Usuario</h6>
+                            {% if user_detail.is_active %}
+                                <span class="badge bg-success fs-6">Activo</span>
+                            {% else %}
+                                <span class="badge bg-danger fs-6">Inactivo</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="text-center">
+                            <h6>Acceso al Sistema</h6>
+                            {% if user_detail.can_access %}
+                                <span class="badge bg-success fs-6">Permitido</span>
+                            {% else %}
+                                <span class="badge bg-warning fs-6">Denegado</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="text-center">
+                            <h6>Cambio de Contraseña</h6>
+                            {% if user_detail.must_change_password %}
+                                <span class="badge bg-warning fs-6">Requerido</span>
+                            {% else %}
+                                <span class="badge bg-info fs-6">Opcional</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Roles Asignados -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-shield"></i> Roles Asignados
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if user_roles %}
+                    <div class="row">
+                        {% for user_role in user_roles %}
+                        <div class="col-md-6 mb-3">
+                            <div class="border rounded p-3">
+                                <h6 class="mb-2">{{ user_role.role.name }}</h6>
+                                <small class="text-muted">{{ user_role.role.description|default:"Sin descripción" }}</small>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-muted mb-0">No hay roles asignados</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Información Adicional -->
+    <div class="col-md-4">
+        <!-- Información de Cuenta -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h6 class="card-title mb-0">
+                    <i class="bi bi-clock"></i> Información de Cuenta
+                </h6>
+            </div>
+            <div class="card-body">
+                <p><strong>Fecha de Creación:</strong><br>{{ user_detail.date_joined|date:"d/m/Y H:i" }}</p>
+                <p><strong>Último Acceso:</strong><br>
+                    {% if user_detail.last_login %}
+                        {{ user_detail.last_login|date:"d/m/Y H:i" }}
+                    {% else %}
+                        <span class="text-muted">Nunca</span>
+                    {% endif %}
+                </p>
+                <p><strong>Empresa:</strong><br>{{ user_detail.company.name }}</p>
+            </div>
+        </div>
+        
+        <!-- Actividad Reciente -->
+        <div class="card">
+            <div class="card-header">
+                <h6 class="card-title mb-0">
+                    <i class="bi bi-activity"></i> Actividad Reciente
+                </h6>
+            </div>
+            <div class="card-body">
+                {% if recent_activity %}
+                    <div class="list-group list-group-flush">
+                        {% for activity in recent_activity %}
+                        <div class="list-group-item px-0">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <small class="text-muted">{{ activity.created_at|date:"d/m/Y H:i" }}</small>
+                                    <div class="mt-1">
+                                        {% if activity.success %}
+                                            <span class="badge bg-success">Login Exitoso</span>
+                                        {% else %}
+                                            <span class="badge bg-danger">Login Fallido</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <small class="text-muted">{{ activity.ip }}</small>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-muted mb-0">No hay actividad registrada</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+{{ block.super }}
+<style>
+    .card {
+        background: var(--content-bg);
+        border: 1px solid var(--border-color);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .card-header {
+        background: var(--primary-dark);
+        color: var(--neutral-light);
+        border-bottom: 1px solid var(--border-color);
+    }
+    
+    .list-group-item {
+        background: var(--content-bg);
+        border-color: var(--border-color);
+        color: var(--text-color);
+    }
+    
+    .border {
+        border-color: var(--border-color) !important;
+    }
+    
+    .badge {
+        font-size: 0.7rem;
+        padding: 0.4rem 0.6rem;
+    }
+</style>
+{% endblock %}

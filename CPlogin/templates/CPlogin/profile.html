@@ -1,0 +1,488 @@
+{% extends 'base.html' %}
+
+{% block title %}Mi Perfil - ServiceNow Cerro Verde{% endblock %}
+
+{% block extra_css %}
+<style>
+    .profile-container {
+        min-height: 100vh;
+        background: var(--neutral-gray);
+    }
+    
+    .navbar {
+        background: var(--primary-dark);
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    
+    .navbar-brand {
+        color: var(--neutral-light) !important;
+        font-weight: bold;
+        font-size: 1.2rem;
+    }
+    
+    .navbar-nav .nav-link {
+        color: var(--neutral-light) !important;
+        transition: color 0.3s ease;
+    }
+    
+    .navbar-nav .nav-link:hover {
+        color: var(--primary-light) !important;
+    }
+    
+    .user-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        border: 2px solid var(--primary-light);
+        object-fit: cover;
+    }
+    
+    .main-content {
+        padding: 2rem;
+    }
+    
+    .profile-card {
+        background: var(--neutral-light);
+        border-radius: 15px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        overflow: hidden;
+    }
+    
+    .profile-header {
+        background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-light) 100%);
+        color: var(--neutral-light);
+        padding: 2rem;
+        text-align: center;
+        position: relative;
+    }
+    
+    .profile-avatar {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        border: 4px solid var(--neutral-light);
+        object-fit: cover;
+        margin: 0 auto 1rem;
+        display: block;
+    }
+    
+    .profile-avatar-placeholder {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        border: 4px solid var(--neutral-light);
+        background: var(--primary-light);
+        color: var(--neutral-light);
+        font-size: 3rem;
+        margin: 0 auto 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .profile-name {
+        font-size: 1.8rem;
+        font-weight: 300;
+        margin-bottom: 0.5rem;
+    }
+    
+    .profile-title {
+        font-size: 1rem;
+        opacity: 0.9;
+        margin-bottom: 0.5rem;
+    }
+    
+    .profile-department {
+        font-size: 0.9rem;
+        opacity: 0.8;
+    }
+    
+    .profile-body {
+        padding: 2rem;
+    }
+    
+    .form-section {
+        margin-bottom: 2rem;
+    }
+    
+    .form-section h3 {
+        color: var(--primary-dark);
+        font-size: 1.3rem;
+        margin-bottom: 1rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid var(--primary-light);
+    }
+    
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+    
+    .form-label {
+        font-weight: 600;
+        color: var(--primary-dark);
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+    
+    .form-control {
+        border: 2px solid var(--neutral-gray);
+        border-radius: 8px;
+        padding: 0.75rem;
+        width: 100%;
+        transition: all 0.3s ease;
+        font-size: 1rem;
+    }
+    
+    .form-control:focus {
+        border-color: var(--primary-light);
+        box-shadow: 0 0 0 0.2rem rgba(128, 182, 161, 0.25);
+        outline: none;
+    }
+    
+    .form-control:disabled {
+        background: var(--neutral-gray);
+        color: var(--neutral-gray);
+    }
+    
+    .row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1rem;
+    }
+    
+    .btn-primary {
+        background: var(--primary-light);
+        border: none;
+        border-radius: 8px;
+        padding: 0.75rem 2rem;
+        font-weight: 600;
+        color: var(--neutral-light);
+        font-size: 1rem;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-primary:hover {
+        background: var(--primary-dark);
+        transform: translateY(-2px);
+    }
+    
+    .btn-secondary {
+        background: var(--neutral-gray);
+        border: 2px solid var(--neutral-gray);
+        border-radius: 8px;
+        padding: 0.75rem 2rem;
+        font-weight: 600;
+        color: var(--primary-dark);
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-block;
+        margin-right: 1rem;
+    }
+    
+    .btn-secondary:hover {
+        background: var(--primary-dark);
+        border-color: var(--primary-dark);
+        color: var(--neutral-light);
+        transform: translateY(-2px);
+    }
+    
+    .alert {
+        border-radius: 8px;
+        border: none;
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+        font-size: 0.9rem;
+    }
+    
+    .alert-success {
+        background: var(--accent-green);
+        color: var(--neutral-light);
+    }
+    
+    .alert-danger {
+        background: #dc3545;
+        color: var(--neutral-light);
+    }
+    
+    .info-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid var(--neutral-gray);
+    }
+    
+    .info-item:last-child {
+        border-bottom: none;
+    }
+    
+    .info-label {
+        font-weight: 600;
+        color: var(--primary-dark);
+    }
+    
+    .info-value {
+        color: var(--neutral-gray);
+    }
+    
+    .dropdown-menu {
+        border: none;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        border-radius: 8px;
+    }
+    
+    .dropdown-item {
+        color: var(--primary-dark);
+        transition: background-color 0.3s ease;
+    }
+    
+    .dropdown-item:hover {
+        background-color: var(--primary-light);
+        color: var(--neutral-light);
+    }
+    
+    .loading {
+        display: none;
+        text-align: center;
+        padding: 1rem;
+    }
+    
+    .spinner-border {
+        color: var(--primary-light);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="profile-container">
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg">
+        <div class="container">
+                            <a class="navbar-brand" href="{% url 'CPdashadmin:dashboard' %}">
+                {% if user.company.logo %}
+                    <img src="{{ user.company.logo.url }}" alt="Logo" style="height: 30px; margin-right: 10px;">
+                {% endif %}
+                ServiceNow Cerro Verde
+            </a>
+            
+            <div class="navbar-nav ms-auto">
+                <div class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" role="button" data-bs-toggle="dropdown">
+                        {% if user.avatar %}
+                            <img src="{{ user.avatar.url }}" alt="Avatar" class="user-avatar me-2">
+                        {% else %}
+                            <div class="user-avatar me-2 d-flex align-items-center justify-content-center" style="background: var(--primary-light); color: var(--neutral-light);">
+                                {{ user.first_name|first|upper }}{{ user.last_name|first|upper }}
+                            </div>
+                        {% endif %}
+                        {{ user.get_full_name|default:user.username }}
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="{% url 'CPlogin:profile' %}">
+                            <i class="fas fa-user me-2"></i>Mi Perfil
+                        </a></li>
+                        <li><a class="dropdown-item" href="{% url 'CPlogin:change_password' %}">
+                            <i class="fas fa-key me-2"></i>Cambiar Contraseña
+                        </a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="{% url 'CPlogin:logout' %}">
+                            <i class="fas fa-sign-out-alt me-2"></i>Cerrar Sesión
+                        </a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="container">
+            <div class="profile-card">
+                <!-- Profile Header -->
+                <div class="profile-header">
+                    {% if user.avatar %}
+                        <img src="{{ user.avatar.url }}" alt="Avatar" class="profile-avatar">
+                    {% else %}
+                        <div class="profile-avatar-placeholder">
+                            {{ user.first_name|first|upper }}{{ user.last_name|first|upper }}
+                        </div>
+                    {% endif %}
+                    <div class="profile-name">{{ user.get_full_name|default:user.username }}</div>
+                    <div class="profile-title">{{ user.title|default:"Usuario" }}</div>
+                    <div class="profile-department">{{ user.department|default:"Sin departamento" }}</div>
+                </div>
+                
+                <!-- Profile Body -->
+                <div class="profile-body">
+                    <!-- Mensajes -->
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                    
+                    <!-- Formulario de Perfil -->
+                    <form method="post" id="profile-form">
+                        {% csrf_token %}
+                        
+                        <!-- Información Personal -->
+                        <div class="form-section">
+                            <h3>Información Personal</h3>
+                            <div class="row">
+                                <div class="form-group">
+                                    <label for="first_name" class="form-label">Nombre</label>
+                                    <input type="text" class="form-control" id="first_name" name="first_name" 
+                                           value="{{ user.first_name|default:'' }}" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="last_name" class="form-label">Apellido</label>
+                                    <input type="text" class="form-control" id="last_name" name="last_name" 
+                                           value="{{ user.last_name|default:'' }}" required>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="form-group">
+                                    <label for="email" class="form-label">Email</label>
+                                    <input type="email" class="form-control" id="email" name="email" 
+                                           value="{{ user.email|default:'' }}" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="username" class="form-label">Usuario</label>
+                                    <input type="text" class="form-control" id="username" name="username" 
+                                           value="{{ user.username }}" disabled>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Información Laboral -->
+                        <div class="form-section">
+                            <h3>Información Laboral</h3>
+                            <div class="row">
+                                <div class="form-group">
+                                    <label for="title" class="form-label">Cargo</label>
+                                    <input type="text" class="form-control" id="title" name="title" 
+                                           value="{{ user.title|default:'' }}">
+                                </div>
+                                <div class="form-group">
+                                    <label for="department" class="form-label">Departamento</label>
+                                    <input type="text" class="form-control" id="department" name="department" 
+                                           value="{{ user.department|default:'' }}">
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="form-group">
+                                    <label for="location" class="form-label">Ubicación</label>
+                                    <input type="text" class="form-control" id="location" name="location" 
+                                           value="{{ user.location|default:'' }}">
+                                </div>
+                                <div class="form-group">
+                                    <label for="sap_id" class="form-label">SAP ID</label>
+                                    <input type="text" class="form-control" id="sap_id" name="sap_id" 
+                                           value="{{ user.sap_id|default:'' }}">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="employee_number" class="form-label">Número de Empleado</label>
+                                <input type="text" class="form-control" id="employee_number" name="employee_number" 
+                                       value="{{ user.employee_number|default:'' }}">
+                            </div>
+                        </div>
+                        
+                        <!-- Información del Sistema -->
+                        <div class="form-section">
+                            <h3>Información del Sistema</h3>
+                            <div class="info-item">
+                                <span class="info-label">Empresa:</span>
+                                <span class="info-value">{{ user.company.name }}</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Fecha de Registro:</span>
+                                <span class="info-value">{{ user.date_joined|date:"d/m/Y H:i" }}</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Último Acceso:</span>
+                                <span class="info-value">{{ user.last_login|date:"d/m/Y H:i"|default:"Nunca" }}</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Estado:</span>
+                                <span class="info-value">
+                                    {% if user.is_active %}
+                                        <span style="color: var(--accent-green);">✓ Activo</span>
+                                    {% else %}
+                                        <span style="color: #dc3545;">✗ Inactivo</span>
+                                    {% endif %}
+                                </span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Acceso al Sistema:</span>
+                                <span class="info-value">
+                                    {% if user.can_access %}
+                                        <span style="color: var(--accent-green);">✓ Permitido</span>
+                                    {% else %}
+                                        <span style="color: #dc3545;">✗ Denegado</span>
+                                    {% endif %}
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <!-- Botones -->
+                        <div class="form-section">
+                            <button type="submit" class="btn btn-primary" id="save-btn">
+                                <span id="save-text">Guardar Cambios</span>
+                                <span id="save-spinner" class="loading">
+                                    <span class="spinner-border spinner-border-sm" role="status"></span>
+                                    Guardando...
+                                </span>
+                            </button>
+                            <a href="{% url 'CPdashadmin:dashboard' %}" class="btn-secondary">
+                                Volver al Dashboard
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Mostrar loading al enviar el formulario
+document.getElementById('profile-form').addEventListener('submit', function() {
+    const saveBtn = document.getElementById('save-btn');
+    const saveText = document.getElementById('save-text');
+    const saveSpinner = document.getElementById('save-spinner');
+    
+    saveBtn.disabled = true;
+    saveText.style.display = 'none';
+    saveSpinner.style.display = 'inline-block';
+});
+
+// Auto-hide alerts after 5 seconds
+document.addEventListener('DOMContentLoaded', function() {
+    const alerts = document.querySelectorAll('.alert');
+    alerts.forEach(function(alert) {
+        setTimeout(function() {
+            const bsAlert = new bootstrap.Alert(alert);
+            bsAlert.close();
+        }, 5000);
+    });
+});
+
+// Validación en tiempo real
+document.querySelectorAll('.form-control').forEach(function(input) {
+    input.addEventListener('input', function() {
+        if (this.value.trim() !== '') {
+            this.classList.add('has-content');
+        } else {
+            this.classList.remove('has-content');
+        }
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,195 @@
+{% extends 'CPdashadmin/base_admin.html' %}
+
+{% block admin_title %}Crear Rol{% endblock %}
+
+{% block content_title %}Crear Nuevo Rol{% endblock %}
+{% block content_subtitle %}Definir un nuevo rol para el sistema{% endblock %}
+
+{% block admin_content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-shield-plus"></i> Información del Rol
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="row">
+                        <!-- Información Básica -->
+                        <div class="col-md-6">
+                            <h6 class="text-muted mb-3">Información Básica</h6>
+                            
+                            <div class="mb-3">
+                                <label for="name" class="form-label">Nombre del Rol *</label>
+                                <input type="text" class="form-control" id="name" name="name" required>
+                                <div class="form-text">Nombre descriptivo del rol</div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="key" class="form-label">Clave del Rol *</label>
+                                <select class="form-select" id="key" name="key" required>
+                                    <option value="">Seleccionar tipo</option>
+                                    {% for key, label in role_choices %}
+                                        <option value="{{ key }}">{{ label }}</option>
+                                    {% endfor %}
+                                </select>
+                                <div class="form-text">Tipo predefinido del rol</div>
+                            </div>
+                        </div>
+                        
+                        <!-- Configuración -->
+                        <div class="col-md-6">
+                            <h6 class="text-muted mb-3">Configuración</h6>
+                            
+                            <div class="mb-3">
+                                <label for="description" class="form-label">Descripción</label>
+                                <textarea class="form-control" id="description" name="description" rows="3"></textarea>
+                                <div class="form-text">Descripción detallada del rol</div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="can_access" name="can_access" checked>
+                                    <label class="form-check-label" for="can_access">
+                                        Puede Acceder al Sistema
+                                    </label>
+                                    <div class="form-text">Permitir acceso al sistema</div>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="is_system" name="is_system">
+                                    <label class="form-check-label" for="is_system">
+                                        Es Rol del Sistema
+                                    </label>
+                                    <div class="form-text">Rol especial del sistema</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Permisos (Futuro) -->
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <h6 class="text-muted mb-3">Permisos</h6>
+                            <div class="alert alert-info">
+                                <i class="bi bi-info-circle"></i>
+                                <strong>Nota:</strong> La gestión de permisos específicos estará disponible en futuras versiones.
+                                Por ahora, los roles se basan en los tipos predefinidos.
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Botones de Acción -->
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <hr>
+                            <div class="d-flex justify-content-between">
+                                <a href="{% url 'CPdashadmin:role_management' %}" class="btn btn-secondary">
+                                    <i class="bi bi-arrow-left"></i> Cancelar
+                                </a>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-check-lg"></i> Crear Rol
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+{{ block.super }}
+<style>
+    .card {
+        background: var(--content-bg);
+        border: 1px solid var(--border-color);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .card-header {
+        background: var(--primary-dark);
+        color: var(--neutral-light);
+        border-bottom: 1px solid var(--border-color);
+    }
+    
+    .form-control, .form-select {
+        background-color: var(--content-bg);
+        border-color: var(--border-color);
+        color: var(--text-color);
+    }
+    
+    .form-control:focus, .form-select:focus {
+        background-color: var(--content-bg);
+        border-color: var(--primary-light);
+        color: var(--text-color);
+        box-shadow: 0 0 0 0.2rem rgba(var(--bs-primary-rgb), 0.25);
+    }
+    
+    .form-check-input:checked {
+        background-color: var(--primary-dark);
+        border-color: var(--primary-dark);
+    }
+    
+    .form-text {
+        color: var(--neutral-gray);
+    }
+    
+    .alert-info {
+        background-color: rgba(var(--bs-info-rgb), 0.1);
+        border-color: var(--bs-info);
+        color: var(--text-color);
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form');
+    const nameInput = document.getElementById('name');
+    const keySelect = document.getElementById('key');
+    
+    // Validación de nombre
+    nameInput.addEventListener('blur', function() {
+        if (nameInput.value.length < 2) {
+            nameInput.setCustomValidity('El nombre del rol debe tener al menos 2 caracteres');
+        } else {
+            nameInput.setCustomValidity('');
+        }
+    });
+    
+    // Validación del formulario
+    form.addEventListener('submit', function(e) {
+        if (!form.checkValidity()) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+        form.classList.add('was-validated');
+    });
+    
+    // Auto-completar descripción basada en la clave seleccionada
+    keySelect.addEventListener('change', function() {
+        const descriptions = {
+            'admin': 'Administrador del sistema con acceso completo',
+            'user': 'Usuario estándar con acceso básico',
+            'technician': 'Técnico con acceso a tickets y herramientas'
+        };
+        
+        const descriptionField = document.getElementById('description');
+        if (descriptions[this.value]) {
+            descriptionField.value = descriptions[this.value];
+        }
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,211 @@
+<!-- Step 2: Map Columns -->
+<div class="card">
+    <div class="card-header">
+        <h5 class="card-title mb-0">
+            <i class="bi bi-gear"></i> Paso 2: Mapear Columnas
+        </h5>
+    </div>
+    <div class="card-body">
+        <!-- CSV Preview -->
+        <div class="mb-4">
+            <h6>Vista Previa del CSV</h6>
+            
+            <!-- Información de Detección -->
+            <div class="alert alert-success mb-3">
+                <i class="bi bi-check-circle"></i>
+                <strong>Detección Automática:</strong>
+                <ul class="mb-0 mt-2">
+                    <li><strong>Delimitador:</strong> {{ csv_delimiter }}</li>
+                    <li><strong>Codificación:</strong> {{ csv_encoding }}</li>
+                    <li><strong>Encabezados:</strong> {% if csv_has_headers %}Sí{% else %}No{% endif %}</li>
+                    <li><strong>Columnas detectadas:</strong> {{ csv_columns|length }}</li>
+                </ul>
+            </div>
+            
+            <!-- Advertencias de Conflictos -->
+            {% if duplicate_columns %}
+            <div class="alert alert-warning mb-3">
+                <i class="bi bi-exclamation-triangle"></i>
+                <strong>Columnas Duplicadas Detectadas:</strong>
+                <ul class="mb-0 mt-2">
+                    {% for col in duplicate_columns %}
+                    <li>{{ col }}</li>
+                    {% endfor %}
+                </ul>
+                <small class="text-muted">Esto puede causar problemas en la importación. Considere limpiar el archivo CSV.</small>
+            </div>
+            {% endif %}
+            
+            {% if problematic_columns %}
+            <div class="alert alert-warning mb-3">
+                <i class="bi bi-exclamation-triangle"></i>
+                <strong>Columnas Problemáticas:</strong>
+                <ul class="mb-0 mt-2">
+                    {% for col in problematic_columns %}
+                    <li>{{ col }}</li>
+                    {% endfor %}
+                </ul>
+                <small class="text-muted">Algunas columnas no tienen nombres válidos.</small>
+            </div>
+            {% endif %}
+            
+            <div class="table-responsive">
+                <table class="table table-sm table-bordered">
+                    <thead>
+                        <tr>
+                            {% for column in csv_columns %}
+                            <th>{{ column }}</th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in csv_preview %}
+                        <tr>
+                            {% for value in row %}
+                            <td>{{ value|default:""|truncatechars:20 }}</td>
+                            {% endfor %}
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <form method="post">
+            {% csrf_token %}
+            
+            <!-- Column Mapping -->
+            <div class="row">
+                <div class="col-md-6">
+                    <h6>Mapeo de Columnas</h6>
+                    <div class="alert alert-info">
+                        <i class="bi bi-lightbulb"></i>
+                        <strong>Sugerencias automáticas:</strong> Los campos se han mapeado automáticamente según los nombres de columnas detectados.
+                    </div>
+                    
+                    {% for field_name, field_label in user_fields %}
+                    <div class="mb-3">
+                        <label for="map_{{ field_name }}" class="form-label">
+                            {{ field_label }}
+                            {% if field_name == 'username' or field_name == 'email' %}
+                            <span class="text-danger">*</span>
+                            {% endif %}
+                        </label>
+                        <select class="form-select" id="map_{{ field_name }}" name="map_{{ field_name }}">
+                            <option value="">-- No mapear --</option>
+                            {% for column in csv_columns %}
+                            <option value="{{ column }}">
+                                {{ column }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                <div class="col-md-6">
+                    <h6>Reglas de Interpretación Dinámicas</h6>
+                    <div class="alert alert-info">
+                        <i class="bi bi-gear"></i>
+                        <strong>Crear reglas personalizadas:</strong> Defina condiciones para modificar automáticamente los datos durante la importación.
+                    </div>
+                    
+                    <!-- Reglas Sugeridas -->
+                    <div class="mb-4">
+                        <h6 class="text-muted">Reglas Sugeridas</h6>
+                        {% for rule in suggested_rules %}
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" id="suggested_rule_{{ forloop.counter }}" 
+                                   name="suggested_rules" value="{{ rule.name }}">
+                            <label class="form-check-label" for="suggested_rule_{{ forloop.counter }}">
+                                <strong>{{ rule.name }}</strong>
+                                <br>
+                                <small class="text-muted">{{ rule.description }}</small>
+                            </label>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    
+                    <!-- Reglas Personalizadas -->
+                    <div class="mb-4">
+                        <h6 class="text-muted">Reglas Personalizadas</h6>
+                        <div id="custom-rules-container">
+                            <!-- Las reglas se agregarán dinámicamente aquí -->
+                        </div>
+                        <button type="button" class="btn btn-outline-primary btn-sm" onclick="addCustomRule()">
+                            <i class="bi bi-plus-circle"></i> Agregar Nueva Regla
+                        </button>
+                    </div>
+                    
+                    <h6>Configuraciones de Importación</h6>
+                    
+                    <div class="mb-3">
+                        <label for="default_password" class="form-label">Contraseña por Defecto</label>
+                        <input type="text" class="form-control" id="default_password" name="default_password" value="changeme123">
+                        <div class="form-text">Contraseña temporal para nuevos usuarios</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="default_role" class="form-label">Rol por Defecto</label>
+                        <select class="form-select" id="default_role" name="default_role">
+                            <option value="">-- Sin rol --</option>
+                            {% for role in roles %}
+                            <option value="{{ role.id }}">{{ role.name }}</option>
+                            {% endfor %}
+                        </select>
+                        {% if not roles %}
+                        <div class="form-text text-warning">
+                            <i class="bi bi-exclamation-triangle"></i> No hay roles configurados en la empresa
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="default_is_active" name="default_is_active" checked>
+                            <label class="form-check-label" for="default_is_active">
+                                Usuarios activos por defecto
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="default_can_access" name="default_can_access" checked>
+                            <label class="form-check-label" for="default_can_access">
+                                Permitir acceso por defecto
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="default_must_change_password" name="default_must_change_password" checked>
+                            <label class="form-check-label" for="default_must_change_password">
+                                Forzar cambio de contraseña
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="update_existing" name="update_existing">
+                            <label class="form-check-label" for="update_existing">
+                                Actualizar usuarios existentes
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="d-flex justify-content-between">
+                <a href="{% url 'CPdashadmin:user_import' %}" class="btn btn-secondary">
+                    <i class="bi bi-arrow-left"></i> Volver
+                </a>
+                <button type="submit" name="map_columns" class="btn btn-primary">
+                    <i class="bi bi-arrow-right"></i> Continuar
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

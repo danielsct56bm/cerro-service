@@ -1,0 +1,218 @@
+{% extends 'CPdashadmin/base_admin.html' %}
+
+{% block admin_title %}Gestión de Roles{% endblock %}
+
+{% block content_title %}Gestión de Roles{% endblock %}
+{% block content_subtitle %}Administrar roles y permisos del sistema{% endblock %}
+
+{% block admin_content %}
+<!-- Header Actions -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="mb-0">Roles del Sistema</h4>
+        <p class="text-muted mb-0">Gestionar roles y sus permisos asociados</p>
+    </div>
+    <a href="{% url 'CPdashadmin:role_create' %}" class="btn btn-primary">
+        <i class="bi bi-plus-lg"></i> Crear Rol
+    </a>
+</div>
+
+<!-- Roles Grid -->
+<div class="row">
+    {% for role in roles %}
+    <div class="col-md-6 col-lg-4 mb-4">
+        <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h6 class="card-title mb-0">
+                    <i class="bi bi-shield"></i> {{ role.name }}
+                </h6>
+                <div class="dropdown">
+                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                        <i class="bi bi-three-dots"></i>
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="{% url 'CPdashadmin:role_detail' role.id %}">
+                            <i class="bi bi-eye"></i> Ver Detalles
+                        </a></li>
+                        <li><a class="dropdown-item" href="{% url 'CPdashadmin:role_edit' role.id %}">
+                            <i class="bi bi-pencil"></i> Editar
+                        </a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item text-danger" href="{% url 'CPdashadmin:role_delete' role.id %}">
+                            <i class="bi bi-trash"></i> Eliminar
+                        </a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="card-body">
+                <p class="card-text text-muted">
+                    {{ role.description|default:"Sin descripción" }}
+                </p>
+                
+                <div class="d-flex justify-content-between align-items-center">
+                    <span class="badge bg-primary">
+                        <i class="bi bi-people"></i> {{ role.user_count }} usuarios
+                    </span>
+                    
+                    <small class="text-muted">
+                        Creado: {{ role.created_at|date:"d/m/Y" }}
+                    </small>
+                </div>
+            </div>
+            <div class="card-footer">
+                <div class="d-flex justify-content-between">
+                    <a href="{% url 'CPdashadmin:role_detail' role.id %}" class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-eye"></i> Ver
+                    </a>
+                    <a href="{% url 'CPdashadmin:role_edit' role.id %}" class="btn btn-sm btn-outline-warning">
+                        <i class="bi bi-pencil"></i> Editar
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12">
+        <div class="text-center py-5">
+            <i class="bi bi-shield fa-3x text-muted mb-3"></i>
+            <h5 class="text-muted">No hay roles configurados</h5>
+            <p class="text-muted">Crea el primer rol para comenzar a gestionar permisos</p>
+            <a href="{% url 'CPdashadmin:role_create' %}" class="btn btn-primary">
+                <i class="bi bi-plus-lg"></i> Crear Primer Rol
+            </a>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Statistics -->
+{% if roles %}
+<div class="row mt-5">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="card-title mb-0">
+                    <i class="bi bi-graph-up"></i> Estadísticas de Roles
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <h3 class="text-primary">{{ roles.count }}</h3>
+                            <p class="text-muted mb-0">Total de Roles</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <h3 class="text-success">{{ roles|length }}</h3>
+                            <p class="text-muted mb-0">Roles Activos</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <h3 class="text-info">
+                                {% with total_users=roles|length %}
+                                    {% for role in roles %}
+                                        {% if forloop.first %}{{ role.user_count }}{% endif %}
+                                    {% endfor %}
+                                {% endwith %}
+                            </h3>
+                            <p class="text-muted mb-0">Usuarios Asignados</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <h3 class="text-warning">
+                                {% for role in roles %}
+                                    {% if role.user_count == 0 %}
+                                        {{ forloop.counter }}
+                                    {% endif %}
+                                {% endfor %}
+                            </h3>
+                            <p class="text-muted mb-0">Roles Sin Usuarios</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_css %}
+{{ block.super }}
+<style>
+    .card {
+        background: var(--content-bg);
+        border: 1px solid var(--border-color);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    
+    .card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    
+    .card-header {
+        background: var(--primary-dark);
+        color: var(--neutral-light);
+        border-bottom: 1px solid var(--border-color);
+    }
+    
+    .card-footer {
+        background: var(--content-bg);
+        border-top: 1px solid var(--border-color);
+    }
+    
+    .dropdown-menu {
+        background: var(--content-bg);
+        border: 1px solid var(--border-color);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    
+    .dropdown-item {
+        color: var(--text-color);
+    }
+    
+    .dropdown-item:hover {
+        background-color: var(--primary-light);
+        color: var(--neutral-light);
+    }
+    
+    .badge {
+        font-size: 0.8rem;
+        padding: 0.5rem 0.8rem;
+    }
+    
+    .btn-sm {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.875rem;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Confirmación para eliminación
+    const deleteLinks = document.querySelectorAll('.dropdown-item.text-danger');
+    deleteLinks.forEach(function(link) {
+        link.addEventListener('click', function(e) {
+            if (!confirm('¿Está seguro de que desea eliminar este rol? Esta acción puede afectar a los usuarios asignados.')) {
+                e.preventDefault();
+            }
+        });
+    });
+    
+    // Tooltips para botones
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,373 @@
+{% extends 'CPdashadmin/base_admin.html' %}
+
+{% block admin_title %}Crear Nueva Categoría{% endblock %}
+
+{% block content_title %}Crear Nueva Categoría{% endblock %}
+{% block content_subtitle %}Definir una nueva categoría de tickets{% endblock %}
+
+{% block admin_content %}
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-folder-plus me-2"></i>
+                    Información de la Categoría
+                </h5>
+            </div>
+            <div class="card-body">
+                <form id="createCategoryForm">
+                    {% csrf_token %}
+                    
+                    <!-- Nombre de la categoría -->
+                    <div class="mb-3">
+                        <label for="categoryName" class="form-label">
+                            <i class="bi bi-tag me-2"></i>Nombre de la Categoría *
+                        </label>
+                        <input type="text" class="form-control" id="categoryName" required 
+                               placeholder="Ej: Mantenimiento, Soporte Técnico, Consultas">
+                        <div class="form-text">Nombre descriptivo para identificar la categoría</div>
+                    </div>
+
+                    <!-- Descripción -->
+                    <div class="mb-3">
+                        <label for="categoryDescription" class="form-label">
+                            <i class="bi bi-text-paragraph me-2"></i>Descripción
+                        </label>
+                        <textarea class="form-control" id="categoryDescription" rows="3" 
+                                  placeholder="Descripción detallada de la categoría"></textarea>
+                        <div class="form-text">Descripción opcional para mayor claridad</div>
+                    </div>
+
+                    <!-- Icono -->
+                    <div class="mb-3">
+                        <label for="categoryIcon" class="form-label">
+                            <i class="bi bi-emoji-smile me-2"></i>Icono
+                        </label>
+                        <div class="input-group">
+                            <span class="input-group-text">
+                                <i class="bi" id="iconPreview">folder</i>
+                            </span>
+                            <input type="text" class="form-control" id="categoryIcon" 
+                                   placeholder="folder" value="folder">
+                        </div>
+                        <div class="form-text">Nombre del icono de Bootstrap Icons (sin "bi-")</div>
+                    </div>
+
+                    <!-- Color -->
+                    <div class="mb-3">
+                        <label for="categoryColor" class="form-label">
+                            <i class="bi bi-palette me-2"></i>Color
+                        </label>
+                        <div class="input-group">
+                            <input type="color" class="form-control form-control-color" id="categoryColor" 
+                                   value="#1976d2" title="Elegir color">
+                            <input type="text" class="form-control" id="categoryColorHex" 
+                                   value="#1976d2" placeholder="#1976d2">
+                        </div>
+                        <div class="form-text">Color para identificar la categoría visualmente</div>
+                    </div>
+
+                    <!-- Estado -->
+                    <div class="mb-3">
+                        <label class="form-label">
+                            <i class="bi bi-toggle-on me-2"></i>Estado
+                        </label>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="categoryActive" checked>
+                            <label class="form-check-label" for="categoryActive">
+                                Categoría activa
+                            </label>
+                        </div>
+                        <div class="form-text">Las categorías inactivas no aparecerán en los kiosks</div>
+                    </div>
+
+                    <!-- Botones -->
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'CPdashadmin:ticket_categories_management' %}" class="btn btn-secondary">
+                            <i class="bi bi-arrow-left me-2"></i>Cancelar
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle me-2"></i>Crear Categoría
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <!-- Vista previa -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-eye me-2"></i>Vista Previa
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="category-preview">
+                    <div class="preview-item">
+                        <i class="bi" id="previewIcon">folder</i>
+                        <span id="previewName">Nombre de la categoría</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Información -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-info-circle me-2"></i>Información
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <h6><i class="bi bi-lightbulb me-2"></i>Consejos:</h6>
+                    <ul class="mb-0">
+                        <li>Usa nombres claros y descriptivos</li>
+                        <li>Elige iconos que representen bien la categoría</li>
+                        <li>Los colores ayudan a identificar rápidamente</li>
+                        <li>Puedes desactivar categorías sin eliminarlas</li>
+                    </ul>
+                </div>
+                
+                <div class="alert alert-warning">
+                    <h6><i class="bi bi-exclamation-triangle me-2"></i>Nota:</h6>
+                    <p class="mb-0">Una vez creada la categoría, podrás agregar subcategorías y plantillas de formularios.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de confirmación -->
+<div class="modal fade" id="successModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-check-circle text-success me-2"></i>
+                    Categoría Creada
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>La categoría ha sido creada exitosamente.</p>
+                <div id="categoryInfo">
+                    <!-- Información de la categoría creada -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                <a href="{% url 'CPdashadmin:ticket_categories_management' %}" class="btn btn-primary">Ver Categorías</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+{{ block.super }}
+<style>
+    .card {
+        border-radius: 15px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        border: 1px solid rgba(0,0,0,0.05);
+    }
+    
+    .card-header {
+        background: linear-gradient(135deg, var(--primary-light) 0%, var(--primary-dark) 100%);
+        color: var(--neutral-light);
+        border-radius: 15px 15px 0 0 !important;
+        border: none;
+    }
+    
+    .form-label {
+        font-weight: 600;
+        color: var(--primary-dark);
+        margin-bottom: 0.5rem;
+    }
+    
+    .form-control {
+        border-radius: 10px;
+        border: 2px solid var(--neutral-gray);
+        transition: all 0.3s ease;
+        padding: 0.75rem 1rem;
+    }
+    
+    .form-control:focus {
+        border-color: var(--primary-dark);
+        box-shadow: 0 0 0 0.2rem rgba(var(--primary-dark-rgb), 0.25);
+        transform: translateY(-1px);
+    }
+    
+    .form-control-color {
+        width: 60px;
+        height: 45px;
+        border-radius: 8px;
+        border: 2px solid var(--neutral-gray);
+    }
+    
+    .form-check-input:checked {
+        background-color: var(--primary-dark);
+        border-color: var(--primary-dark);
+    }
+    
+    .btn {
+        border-radius: 10px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        padding: 0.75rem 1.5rem;
+    }
+    
+    .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    }
+    
+    .alert {
+        border-radius: 10px;
+        border: none;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .category-preview {
+        background: var(--neutral-light);
+        border-radius: 10px;
+        padding: 1.5rem;
+        border: 2px dashed var(--neutral-gray);
+    }
+    
+    .preview-item {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        font-size: 1.1rem;
+        font-weight: 600;
+    }
+    
+    .preview-item i {
+        font-size: 1.5rem;
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        background: var(--primary-light);
+        color: var(--neutral-light);
+    }
+    
+    .input-group-text {
+        background: var(--primary-light);
+        color: var(--neutral-light);
+        border: 2px solid var(--neutral-gray);
+        border-right: none;
+    }
+    
+    .form-text {
+        color: var(--neutral-gray);
+        font-size: 0.85rem;
+        margin-top: 0.25rem;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<script>
+// Actualizar vista previa en tiempo real
+document.getElementById('categoryName').addEventListener('input', function() {
+    document.getElementById('previewName').textContent = this.value || 'Nombre de la categoría';
+});
+
+document.getElementById('categoryIcon').addEventListener('input', function() {
+    const iconName = this.value || 'folder';
+    document.getElementById('iconPreview').className = `bi bi-${iconName}`;
+    document.getElementById('previewIcon').className = `bi bi-${iconName}`;
+});
+
+document.getElementById('categoryColor').addEventListener('input', function() {
+    document.getElementById('categoryColorHex').value = this.value;
+    document.getElementById('previewIcon').style.color = this.value;
+});
+
+document.getElementById('categoryColorHex').addEventListener('input', function() {
+    document.getElementById('categoryColor').value = this.value;
+    document.getElementById('previewIcon').style.color = this.value;
+});
+
+// Manejar envío del formulario
+document.getElementById('createCategoryForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = {
+        name: document.getElementById('categoryName').value,
+        description: document.getElementById('categoryDescription').value,
+        icon: document.getElementById('categoryIcon').value || 'folder',
+        color: document.getElementById('categoryColor').value,
+        is_active: document.getElementById('categoryActive').checked
+    };
+    
+    // Validaciones
+    if (!formData.name.trim()) {
+        showNotification('El nombre de la categoría es requerido', 'warning');
+        return;
+    }
+    
+    // Enviar datos
+    fetch('{% url "CPdashadmin:create_ticket_category" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        },
+        body: JSON.stringify(formData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Mostrar modal de éxito
+            const categoryInfo = document.getElementById('categoryInfo');
+            categoryInfo.innerHTML = `
+                <div class="alert alert-success">
+                    <strong>Nombre:</strong> ${data.category.name}<br>
+                    <strong>Icono:</strong> ${data.category.icon}<br>
+                    <strong>Estado:</strong> ${data.category.is_active ? 'Activa' : 'Inactiva'}<br>
+                    <strong>Fecha:</strong> ${new Date(data.category.created_at).toLocaleString()}
+                </div>
+            `;
+            
+            const successModal = new bootstrap.Modal(document.getElementById('successModal'));
+            successModal.show();
+        } else {
+            showNotification('Error: ' + data.message, 'danger');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('Error al crear la categoría', 'danger');
+    });
+});
+
+function showNotification(message, type = 'info') {
+    const notification = document.createElement('div');
+    notification.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+    notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    notification.innerHTML = `
+        <i class="bi bi-${type === 'info' ? 'info-circle' : type === 'warning' ? 'exclamation-triangle' : type === 'danger' ? 'x-circle' : 'check-circle'} me-2"></i>
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.remove();
+        }
+    }, 5000);
+}
+</script>
+{% endblock %}

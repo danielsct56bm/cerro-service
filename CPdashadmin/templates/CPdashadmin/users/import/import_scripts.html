@@ -1,0 +1,337 @@
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Validación de archivo CSV
+    const csvFile = document.getElementById('csv_file');
+    if (csvFile) {
+        csvFile.addEventListener('change', function() {
+            const file = this.files[0];
+            if (file) {
+                if (!file.name.toLowerCase().endsWith('.csv')) {
+                    alert('Por favor seleccione un archivo CSV.');
+                    this.value = '';
+                }
+                
+                if (file.size > 10 * 1024 * 1024) { // 10MB
+                    alert('El archivo es demasiado grande. Máximo 10MB.');
+                    this.value = '';
+                }
+            }
+        });
+    }
+    
+    // Validación de campos requeridos en paso 2
+    const mapForm = document.querySelector('form[name="map_columns"]');
+    if (mapForm) {
+        mapForm.addEventListener('submit', function(e) {
+            const requiredFields = ['username', 'email'];
+            const missingFields = [];
+            
+            requiredFields.forEach(function(field) {
+                const select = document.getElementById('map_' + field);
+                if (!select.value) {
+                    missingFields.push(field);
+                }
+            });
+            
+            if (missingFields.length > 0) {
+                e.preventDefault();
+                alert('Los siguientes campos son obligatorios: ' + missingFields.join(', '));
+                return;
+            }
+            
+            // Validar reglas de interpretación
+            const selectedRules = document.querySelectorAll('input[name="suggested_rules"]:checked');
+            const customRules = document.querySelectorAll('.custom-rule');
+            
+            if (selectedRules.length === 0 && customRules.length === 0) {
+                const confirmRules = confirm('No ha seleccionado ninguna regla de interpretación. ¿Desea continuar sin aplicar reglas automáticas?');
+                if (!confirmRules) {
+                    e.preventDefault();
+                    return;
+                }
+            }
+            
+            // Validar reglas personalizadas
+            const customRuleErrors = validateCustomRules();
+            if (customRuleErrors.length > 0) {
+                e.preventDefault();
+                alert('Errores en reglas personalizadas:\n' + customRuleErrors.join('\n'));
+                return;
+            }
+            
+            // Validar roles disponibles
+            const roleSelect = document.getElementById('default_role');
+            if (roleSelect && roleSelect.options.length <= 1) {
+                const confirmNoRoles = confirm('No hay roles configurados en la empresa. ¿Desea continuar sin asignar roles por defecto?');
+                if (!confirmNoRoles) {
+                    e.preventDefault();
+                    return;
+                }
+            }
+        });
+    }
+    
+    // Mostrar información de reglas al hacer hover
+    const ruleCheckboxes = document.querySelectorAll('input[name="suggested_rules"]');
+    ruleCheckboxes.forEach(function(checkbox) {
+        checkbox.addEventListener('change', function() {
+            const ruleName = this.value;
+            const ruleDiv = this.closest('.mb-3');
+            const ruleDetails = ruleDiv.querySelector('.ms-4');
+            
+            if (this.checked) {
+                ruleDetails.style.display = 'block';
+                ruleDetails.style.backgroundColor = 'rgba(var(--bs-info-rgb), 0.1)';
+                ruleDetails.style.padding = '0.5rem';
+                ruleDetails.style.borderRadius = '0.25rem';
+            } else {
+                ruleDetails.style.display = 'none';
+            }
+        });
+        
+        // Mostrar detalles si está activado inicialmente
+        if (checkbox.checked) {
+            const ruleDiv = checkbox.closest('.mb-3');
+            const ruleDetails = ruleDiv.querySelector('.ms-4');
+            ruleDetails.style.display = 'block';
+            ruleDetails.style.backgroundColor = 'rgba(var(--bs-info-rgb), 0.1)';
+            ruleDetails.style.padding = '0.5rem';
+            ruleDetails.style.borderRadius = '0.25rem';
+        }
+    });
+    
+    // Variables globales para reglas dinámicas
+    let ruleCounter = 0;
+    
+    // Datos de campos y operadores (se cargarán desde el servidor)
+    const availableFields = [];
+    const modifiableFields = [];
+    const comparisonOperators = [];
+    
+    // Cargar datos desde el servidor
+    {% for field in available_fields %}
+    availableFields.push(["{{ field.0 }}", "{{ field.1 }}"]);
+    {% endfor %}
+    
+    {% for field in modifiable_fields %}
+    modifiableFields.push(["{{ field.0 }}", "{{ field.1 }}"]);
+    {% endfor %}
+    
+    {% for op in comparison_operators %}
+    comparisonOperators.push(["{{ op.0 }}", "{{ op.1 }}"]);
+    {% endfor %}
+    
+    // Lógica de activación automática de reglas basada en mapeo
+    const mappingSelects = document.querySelectorAll('select[id^="map_"]');
+    mappingSelects.forEach(function(select) {
+        select.addEventListener('change', function() {
+            const fieldName = this.id.replace('map_', '');
+            updateRuleActivation(fieldName, this.value);
+        });
+    });
+    
+    function updateRuleActivation(fieldName, selectedValue) {
+        const ruleCheckboxes = document.querySelectorAll('input[name="suggested_rules"]');
+        
+        ruleCheckboxes.forEach(function(checkbox) {
+            const ruleName = checkbox.value;
+            let shouldActivate = false;
+            
+            // Lógica de activación automática
+            if (ruleName === 'Rol por Departamento' && fieldName === 'department') {
+                shouldActivate = !selectedValue; // Se activa si no se mapea department
+            } else if (ruleName === 'Estado por Cargo' && fieldName === 'is_active') {
+                shouldActivate = !selectedValue; // Se activa si no se mapea is_active
+            } else if (ruleName === 'Acceso por Ubicación' && fieldName === 'location') {
+                shouldActivate = !!selectedValue; // Se activa si se mapea location
+            }
+            
+            if (shouldActivate && !checkbox.checked) {
+                checkbox.checked = true;
+                checkbox.dispatchEvent(new Event('change'));
+                
+                // Mostrar notificación
+                const ruleLabel = checkbox.closest('.form-check').querySelector('label');
+                const badge = ruleLabel.querySelector('.badge');
+                if (!badge) {
+                    const newBadge = document.createElement('span');
+                    newBadge.className = 'badge bg-success ms-2';
+                    newBadge.textContent = 'Automático';
+                    ruleLabel.appendChild(newBadge);
+                }
+            } else if (!shouldActivate && checkbox.checked) {
+                // Solo desactivar si no es automático inicialmente
+                const badge = checkbox.closest('.form-check').querySelector('.badge');
+                if (!badge || !badge.textContent.includes('Automático')) {
+                    checkbox.checked = false;
+                    checkbox.dispatchEvent(new Event('change'));
+                }
+            }
+        });
+    }
+    
+    function addCustomRule() {
+        ruleCounter++;
+        const ruleHtml = `
+            <div class="custom-rule mb-3 p-3 border rounded" id="rule_${ruleCounter}">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <h6 class="mb-0">Regla ${ruleCounter}</h6>
+                    <button type="button" class="btn btn-outline-danger btn-sm" onclick="removeCustomRule(${ruleCounter})">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6 mb-2">
+                        <label class="form-label">Nombre de la Regla</label>
+                        <input type="text" class="form-control" name="rule_name" placeholder="Ej: Rol por Departamento">
+                    </div>
+                    <div class="col-md-6 mb-2">
+                        <label class="form-label">Prioridad</label>
+                        <input type="number" class="form-control" name="rule_priority" value="${ruleCounter}" min="1">
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-4 mb-2">
+                        <label class="form-label">Campo a Evaluar</label>
+                        <select class="form-select" name="rule_field">
+                            <option value="">Seleccionar campo</option>
+                            ${availableFields.map(field => `<option value="${field[0]}">${field[1]}</option>`).join('')}
+                        </select>
+                    </div>
+                    <div class="col-md-4 mb-2">
+                        <label class="form-label">Operador</label>
+                        <select class="form-select" name="rule_operator">
+                            <option value="">Seleccionar operador</option>
+                            ${comparisonOperators.map(op => `<option value="${op[0]}">${op[1]}</option>`).join('')}
+                        </select>
+                    </div>
+                    <div class="col-md-4 mb-2">
+                        <label class="form-label">Valor</label>
+                        <input type="text" class="form-control" name="rule_value" placeholder="Ej: TI">
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6 mb-2">
+                        <label class="form-label">Campo a Modificar</label>
+                        <select class="form-select" name="rule_action_field">
+                            <option value="">Seleccionar campo</option>
+                            ${modifiableFields.map(field => `<option value="${field[0]}">${field[1]}</option>`).join('')}
+                        </select>
+                    </div>
+                    <div class="col-md-6 mb-2">
+                        <label class="form-label">Valor a Asignar</label>
+                        <input type="text" class="form-control" name="rule_action_value" placeholder="Ej: admin">
+                    </div>
+                </div>
+                
+                <div class="form-text">
+                    <i class="bi bi-info-circle"></i> 
+                    <strong>Descripción:</strong> Si <span class="rule-field">[campo]</span> 
+                    <span class="rule-operator">[operador]</span> 
+                    <span class="rule-value">[valor]</span>, entonces 
+                    <span class="rule-action-field">[campo a modificar]</span> = 
+                    <span class="rule-action-value">[valor a asignar]</span>
+                </div>
+            </div>
+        `;
+        
+        document.getElementById('custom-rules-container').insertAdjacentHTML('beforeend', ruleHtml);
+        
+        // Actualizar descripción en tiempo real
+        updateRuleDescription(ruleCounter);
+    }
+    
+    function removeCustomRule(ruleId) {
+        const ruleElement = document.getElementById(`rule_${ruleId}`);
+        if (ruleElement) {
+            ruleElement.remove();
+        }
+    }
+    
+    function updateRuleDescription(ruleId) {
+        const ruleElement = document.getElementById(`rule_${ruleId}`);
+        if (!ruleElement) return;
+        
+        const fieldSelect = ruleElement.querySelector('select[name="rule_field"]');
+        const operatorSelect = ruleElement.querySelector('select[name="rule_operator"]');
+        const valueInput = ruleElement.querySelector('input[name="rule_value"]');
+        const actionFieldSelect = ruleElement.querySelector('select[name="rule_action_field"]');
+        const actionValueInput = ruleElement.querySelector('input[name="rule_action_value"]');
+        
+        const descriptionElement = ruleElement.querySelector('.form-text');
+        
+        function updateDesc() {
+            const field = fieldSelect.value ? availableFields.find(f => f[0] === fieldSelect.value)?.[1] || fieldSelect.value : '[campo]';
+            const operator = operatorSelect.value ? comparisonOperators.find(op => op[0] === operatorSelect.value)?.[1] || operatorSelect.value : '[operador]';
+            const value = valueInput.value || '[valor]';
+            const actionField = actionFieldSelect.value ? modifiableFields.find(f => f[0] === actionFieldSelect.value)?.[1] || actionFieldSelect.value : '[campo a modificar]';
+            const actionValue = actionValueInput.value || '[valor a asignar]';
+            
+            descriptionElement.innerHTML = `
+                <i class="bi bi-info-circle"></i> 
+                <strong>Descripción:</strong> Si <span class="text-primary">${field}</span> 
+                <span class="text-primary">${operator}</span> 
+                <span class="text-primary">"${value}"</span>, entonces 
+                <span class="text-success">${actionField}</span> = 
+                <span class="text-success">"${actionValue}"</span>
+            `;
+        }
+        
+        fieldSelect.addEventListener('change', updateDesc);
+        operatorSelect.addEventListener('change', updateDesc);
+        valueInput.addEventListener('input', updateDesc);
+        actionFieldSelect.addEventListener('change', updateDesc);
+        actionValueInput.addEventListener('input', updateDesc);
+        
+        updateDesc();
+    }
+    
+    // Validación de reglas personalizadas
+    function validateCustomRules() {
+        const ruleElements = document.querySelectorAll('.custom-rule');
+        const errors = [];
+        
+        ruleElements.forEach((ruleElement, index) => {
+            const name = ruleElement.querySelector('input[name="rule_name"]').value.trim();
+            const field = ruleElement.querySelector('select[name="rule_field"]').value;
+            const operator = ruleElement.querySelector('select[name="rule_operator"]').value;
+            const value = ruleElement.querySelector('input[name="rule_value"]').value.trim();
+            const actionField = ruleElement.querySelector('select[name="rule_action_field"]').value;
+            const actionValue = ruleElement.querySelector('input[name="rule_action_value"]').value.trim();
+            
+            if (!name) errors.push(`Regla ${index + 1}: Nombre requerido`);
+            if (!field) errors.push(`Regla ${index + 1}: Campo a evaluar requerido`);
+            if (!operator) errors.push(`Regla ${index + 1}: Operador requerido`);
+            if (!value) errors.push(`Regla ${index + 1}: Valor requerido`);
+            if (!actionField) errors.push(`Regla ${index + 1}: Campo a modificar requerido`);
+            if (!actionValue) errors.push(`Regla ${index + 1}: Valor a asignar requerido`);
+        });
+        
+        return errors;
+    }
+    
+    // Confirmación para eliminación
+    const deleteButtons = document.querySelectorAll('.btn-outline-danger');
+    deleteButtons.forEach(function(button) {
+        button.addEventListener('click', function(e) {
+            if (!confirm('¿Está seguro de que desea eliminar este usuario? Esta acción no se puede deshacer.')) {
+                e.preventDefault();
+            }
+        });
+    });
+    
+    // Validación de conflictos en paso 3
+    const confirmForm = document.querySelector('form[name="confirm_import"]');
+    if (confirmForm) {
+        confirmForm.addEventListener('submit', function(e) {
+            const confirmImport = confirm('¿Está seguro de que desea proceder con la importación? Esta acción modificará la base de datos.');
+            if (!confirmImport) {
+                e.preventDefault();
+            }
+        });
+    }
+});
+</script>

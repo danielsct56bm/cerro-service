@@ -1,0 +1,174 @@
+{% extends 'CPdashadmin/base_admin.html' %}
+
+{% block admin_title %}Gestión de Permisos{% endblock %}
+
+{% block content_title %}Gestión de Permisos{% endblock %}
+{% block content_subtitle %}Administrar permisos del sistema{% endblock %}
+
+{% block admin_content %}
+<div class="row justify-content-center">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-shield-lock"></i> Sistema de Permisos
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i>
+                    <strong>Nota:</strong> El sistema de permisos granular está en desarrollo.
+                    Por ahora, los permisos se manejan a través de los roles predefinidos.
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="text-muted mb-3">Roles Disponibles</h6>
+                        <div class="list-group">
+                            {% for role in roles %}
+                            <div class="list-group-item d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-1">{{ role.name }}</h6>
+                                    <small class="text-muted">{{ role.description|default:"Sin descripción" }}</small>
+                                </div>
+                                <span class="badge bg-primary rounded-pill">{{ role.user_count }} usuarios</span>
+                            </div>
+                            {% empty %}
+                            <div class="list-group-item text-center text-muted">
+                                <i class="bi bi-shield"></i> No hay roles configurados
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <h6 class="text-muted mb-3">Permisos por Rol</h6>
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Rol</th>
+                                        <th>Acceso</th>
+                                        <th>Dashboard</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>Admin</strong></td>
+                                        <td><span class="badge bg-success">Completo</span></td>
+                                        <td>Admin Dashboard</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Technician</strong></td>
+                                        <td><span class="badge bg-warning">Limitado</span></td>
+                                        <td>Technician Dashboard</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>User</strong></td>
+                                        <td><span class="badge bg-info">Básico</span></td>
+                                        <td>Other Dashboard</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <h6 class="text-muted mb-3">Próximas Funcionalidades</h6>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="card border-info">
+                                    <div class="card-body text-center">
+                                        <i class="bi bi-gear text-info fa-2x mb-2"></i>
+                                        <h6>Permisos Granulares</h6>
+                                        <small class="text-muted">Control detallado por módulo</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card border-warning">
+                                    <div class="card-body text-center">
+                                        <i class="bi bi-people text-warning fa-2x mb-2"></i>
+                                        <h6>Grupos de Usuarios</h6>
+                                        <small class="text-muted">Gestión por departamentos</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card border-success">
+                                    <div class="card-body text-center">
+                                        <i class="bi bi-clock text-success fa-2x mb-2"></i>
+                                        <h6>Acceso Temporal</h6>
+                                        <small class="text-muted">Permisos con fecha de expiración</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+{{ block.super }}
+<style>
+    .card {
+        background: var(--content-bg);
+        border: 1px solid var(--border-color);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .card-header {
+        background: var(--primary-dark);
+        color: var(--neutral-light);
+        border-bottom: 1px solid var(--border-color);
+    }
+    
+    .list-group-item {
+        background: var(--content-bg);
+        border-color: var(--border-color);
+        color: var(--text-color);
+    }
+    
+    .list-group-item:hover {
+        background-color: rgba(var(--bs-primary-rgb), 0.1);
+    }
+    
+    .table {
+        background: var(--content-bg);
+        color: var(--text-color);
+    }
+    
+    .table th {
+        border-color: var(--border-color);
+        color: var(--text-color);
+    }
+    
+    .table td {
+        border-color: var(--border-color);
+    }
+    
+    .alert-info {
+        background-color: rgba(var(--bs-info-rgb), 0.1);
+        border-color: var(--bs-info);
+        color: var(--text-color);
+    }
+    
+    .border-info {
+        border-color: var(--bs-info) !important;
+    }
+    
+    .border-warning {
+        border-color: var(--bs-warning) !important;
+    }
+    
+    .border-success {
+        border-color: var(--bs-success) !important;
+    }
+</style>
+{% endblock %}

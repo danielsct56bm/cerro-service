@@ -1,0 +1,121 @@
+<!-- Step 3: Confirm Import -->
+<div class="card">
+    <div class="card-header">
+        <h5 class="card-title mb-0">
+            <i class="bi bi-check-circle"></i> Paso 3: Confirmar Importación
+        </h5>
+    </div>
+    <div class="card-body">
+        <div class="alert alert-warning">
+            <i class="bi bi-exclamation-triangle"></i>
+            <strong>Resumen de Importación:</strong>
+            <ul class="mb-0 mt-2">
+                <li>Total de filas a procesar: <strong>{{ total_rows }}</strong></li>
+                <li>Se mostrarán las primeras 10 filas como vista previa</li>
+                <li>Los usuarios se crearán con la empresa actual</li>
+                {% if selected_rules %}
+                <li>Reglas aplicadas: <strong>{{ selected_rules|join:", " }}</strong></li>
+                {% endif %}
+            </ul>
+        </div>
+        
+        <!-- Reglas Aplicadas -->
+        {% if selected_rules or import_config.custom_rules %}
+        <div class="mb-4">
+            <h6>Reglas de Interpretación Aplicadas</h6>
+            <div class="alert alert-info">
+                <i class="bi bi-gear"></i>
+                <strong>Las siguientes reglas se aplicarán durante la importación:</strong>
+                <ul class="mb-0 mt-2">
+                    {% for rule_name in selected_rules %}
+                    <li>{{ rule_name }}</li>
+                    {% endfor %}
+                    {% for rule in import_config.custom_rules %}
+                    <li>{{ rule.name }} (Prioridad: {{ rule.priority }})</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Conflictos de Reglas -->
+        {% if preview_data.0._rule_conflicts %}
+        <div class="mb-4">
+            <h6>Conflictos de Reglas Detectados</h6>
+            <div class="alert alert-warning">
+                <i class="bi bi-exclamation-triangle"></i>
+                <strong>Se detectaron conflictos entre reglas:</strong>
+                <ul class="mb-0 mt-2">
+                    {% for conflict in preview_data.0._rule_conflicts %}
+                    <li>{{ conflict.rule }}: {{ conflict.field }} cambió de "{{ conflict.old_value }}" a "{{ conflict.new_value }}"</li>
+                    {% endfor %}
+                </ul>
+                <small class="text-muted">Los conflictos se resuelven por prioridad de reglas.</small>
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Preview Data -->
+        <div class="mb-4">
+            <h6>Vista Previa de Datos a Importar</h6>
+            <div class="table-responsive">
+                <table class="table table-sm table-bordered">
+                    <thead>
+                        <tr>
+                            <th>Username</th>
+                            <th>Email</th>
+                            <th>Nombre</th>
+                            <th>Apellido</th>
+                            <th>Departamento</th>
+                            <th>Rol</th>
+                            <th>Estado</th>
+                            <th>Reglas Aplicadas</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user_data in preview_data %}
+                        <tr>
+                            <td>{{ user_data.username }}</td>
+                            <td>{{ user_data.email }}</td>
+                            <td>{{ user_data.first_name }}</td>
+                            <td>{{ user_data.last_name }}</td>
+                            <td>{{ user_data.department }}</td>
+                            <td>{{ user_data.role }}</td>
+                            <td>
+                                {% if user_data.is_active %}
+                                <span class="badge bg-success">Activo</span>
+                                {% else %}
+                                <span class="badge bg-danger">Inactivo</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if user_data._applied_rules %}
+                                <small class="text-muted">
+                                    {% for rule in user_data._applied_rules %}
+                                    <span class="badge bg-info me-1">{{ rule }}</span>
+                                    {% endfor %}
+                                </small>
+                                {% else %}
+                                <span class="text-muted">Ninguna</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <form method="post">
+            {% csrf_token %}
+            <div class="d-flex justify-content-between">
+                <a href="{% url 'CPdashadmin:user_import' %}" class="btn btn-secondary">
+                    <i class="bi bi-arrow-left"></i> Volver
+                </a>
+                <button type="submit" name="confirm_import" class="btn btn-success">
+                    <i class="bi bi-check-lg"></i> Confirmar Importación
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

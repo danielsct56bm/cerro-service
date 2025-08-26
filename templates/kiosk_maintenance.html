@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema en Mantenimiento - {{ company.name }}</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary-color: #007bff;
+            --secondary-color: #6c757d;
+            --warning-color: #ffc107;
+            --danger-color: #dc3545;
+            --light-color: #f8f9fa;
+            --dark-color: #343a40;
+            --company-primary: #{{ company.primary_color|default:"007bff" }};
+            --company-secondary: #{{ company.secondary_color|default:"6c757d" }};
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--company-primary) 0%, var(--company-secondary) 100%);
+            min-height: 100vh;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .maintenance-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 3rem;
+            text-align: center;
+            max-width: 600px;
+            width: 100%;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .maintenance-icon {
+            font-size: 6rem;
+            color: var(--warning-color);
+            margin-bottom: 2rem;
+            animation: pulse 2s infinite;
+        }
+        
+        .maintenance-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--dark-color);
+            margin-bottom: 1rem;
+        }
+        
+        .maintenance-message {
+            font-size: 1.2rem;
+            color: var(--secondary-color);
+            margin-bottom: 2rem;
+            line-height: 1.6;
+        }
+        
+        .company-info {
+            background: var(--light-color);
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .company-name {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--dark-color);
+            margin-bottom: 0.5rem;
+        }
+        
+        .company-logo {
+            max-height: 60px;
+            max-width: 200px;
+            object-fit: contain;
+            margin-bottom: 1rem;
+        }
+        
+        .retry-button {
+            background: var(--company-primary);
+            border-color: var(--company-primary);
+            border-radius: 10px;
+            padding: 0.75rem 2rem;
+            font-weight: 600;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+        }
+        
+        .retry-button:hover {
+            background: var(--company-secondary);
+            border-color: var(--company-secondary);
+            transform: translateY(-2px);
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--warning-color);
+            margin-right: 0.5rem;
+            animation: blink 1.5s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0.3; }
+        }
+        
+        @media (max-width: 768px) {
+            .maintenance-container {
+                margin: 1rem;
+                padding: 2rem;
+            }
+            
+            .maintenance-title {
+                font-size: 2rem;
+            }
+            
+            .maintenance-message {
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="maintenance-container">
+        <div class="maintenance-icon">
+            <i class="bi bi-tools"></i>
+        </div>
+        
+        <h1 class="maintenance-title">Sistema en Mantenimiento</h1>
+        
+        <p class="maintenance-message">
+            {{ maintenance_message|default:"El sistema está temporalmente fuera de servicio para realizar mejoras y actualizaciones. Volveremos pronto con un mejor servicio." }}
+        </p>
+        
+        <div class="company-info">
+            {% if company.logo %}
+                <img src="{{ company.logo.url }}" alt="{{ company.name }}" class="company-logo">
+            {% endif %}
+            <div class="company-name">{{ company.name }}</div>
+            <small class="text-muted">Sistema de Tickets</small>
+        </div>
+        
+        <div class="mb-3">
+            <span class="status-indicator"></span>
+            <small class="text-muted">Verificando estado del sistema...</small>
+        </div>
+        
+        <button class="btn btn-primary retry-button" onclick="checkSystemStatus()">
+            <i class="bi bi-arrow-clockwise me-2"></i>Verificar Estado
+        </button>
+    </div>
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // Check system status every 30 seconds
+        setInterval(checkSystemStatus, 30000);
+        
+        function checkSystemStatus() {
+            fetch('/api/kiosk/status/')
+            .then(response => response.json())
+            .then(data => {
+                if (!data.maintenance_mode) {
+                    // System is back online, redirect to kiosk
+                    window.location.href = '/kiosk/';
+                }
+            })
+            .catch(error => {
+                console.error('Error checking system status:', error);
+            });
+        }
+        
+        // Check status on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            checkSystemStatus();
+        });
+    </script>
+</body>
+</html>

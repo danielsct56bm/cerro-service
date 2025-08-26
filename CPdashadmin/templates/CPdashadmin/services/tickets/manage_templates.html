@@ -1,0 +1,418 @@
+{% extends 'CPdashadmin/base_admin.html' %}
+
+{% block admin_title %}Gestionar Plantillas - {{ category.name }}{% endblock %}
+
+{% block content_title %}Gestionar Plantillas{% endblock %}
+{% block content_subtitle %}Plantillas asociadas a la categoría "{{ category.name }}"{% endblock %}
+
+{% block admin_content %}
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb" class="mb-4">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item">
+            <a href="{% url 'CPdashadmin:dashboard' %}">
+                <i class="bi bi-house"></i> Dashboard
+            </a>
+        </li>
+        <li class="breadcrumb-item">
+            <a href="{% url 'CPdashadmin:ticket_categories_management' %}">
+                <i class="bi bi-folder"></i> Categorías
+            </a>
+        </li>
+        <li class="breadcrumb-item">
+            <a href="{% url 'CPdashadmin:view_ticket_category' category.id %}">
+                <i class="bi bi-{{ category.icon }}" style="color: {{ category.color }};"></i> {{ category.name }}
+            </a>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">
+            <i class="bi bi-file-earmark-text"></i> Plantillas
+        </li>
+    </ol>
+</nav>
+
+<!-- Category Info -->
+<div class="row mb-4">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-{{ category.icon }}" style="color: {{ category.color }};"></i>
+                    Categoría: {{ category.name }}
+                </h5>
+            </div>
+            <div class="card-body">
+                <p class="text-muted mb-0">{{ category.description|default:"Sin descripción" }}</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-gear me-2"></i>Acciones
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{% url 'CPdashadmin:create_ticket_template' %}?category_id={{ category.id }}" class="btn btn-primary">
+                        <i class="bi bi-plus-circle me-2"></i>Nueva Plantilla
+                    </a>
+                    <a href="{% url 'CPdashadmin:view_ticket_category' category.id %}" class="btn btn-secondary">
+                        <i class="bi bi-arrow-left me-2"></i>Volver a Categoría
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Templates Section -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-file-earmark-text me-2"></i>
+                    Plantillas Asociadas ({{ templates|length }})
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if templates %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Nombre</th>
+                                    <th>Tema</th>
+                                    <th>Tipo de Asociación</th>
+                                    <th>Campos</th>
+                                    <th>Estado</th>
+                                    <th>Fecha Creación</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for template in templates %}
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <i class="bi bi-file-earmark-text me-2"></i>
+                                            <strong>{{ template.name }}</strong>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-info">{{ template.theme }}</span>
+                                    </td>
+                                    <td>
+                                        {% if template == direct_template %}
+                                            <span class="badge bg-success">
+                                                <i class="bi bi-link me-1"></i>Directa
+                                            </span>
+                                        {% else %}
+                                            <span class="badge bg-warning">
+                                                <i class="bi bi-gear me-1"></i>Configuración
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-secondary">{{ template.fields.count }} campos</span>
+                                    </td>
+                                    <td>
+                                        {% if template.is_active %}
+                                            <span class="badge bg-success">Activa</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">Inactiva</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ template.created_at|date:"d/m/Y H:i" }}</td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <button class="btn btn-sm btn-outline-primary" onclick="viewTemplate({{ template.id }})" title="Ver detalles">
+                                                <i class="bi bi-eye"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-warning" onclick="editTemplate({{ template.id }})" title="Editar">
+                                                <i class="bi bi-pencil"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-info" onclick="previewTemplate({{ template.id }})" title="Vista previa">
+                                                <i class="bi bi-eye"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-danger" onclick="removeTemplate({{ template.id }}, '{{ template.name }}')" title="Desasociar">
+                                                <i class="bi bi-unlink"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center text-muted py-5">
+                        <i class="bi bi-file-earmark-text display-1 mb-3"></i>
+                        <h5>No hay plantillas asociadas</h5>
+                        <p>Esta categoría no tiene plantillas de formulario asociadas.</p>
+                        <a href="{% url 'CPdashadmin:create_ticket_template' %}?category_id={{ category.id }}" class="btn btn-primary">
+                            <i class="bi bi-plus-circle me-2"></i>Crear Primera Plantilla
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Available Templates Section -->
+{% if all_templates %}
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-list me-2"></i>
+                    Plantillas Disponibles ({{ all_templates.count }})
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    {% for template in all_templates %}
+                        {% if template not in templates %}
+                        <div class="col-md-4 mb-3">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h6 class="card-title">
+                                        <i class="bi bi-file-earmark-text me-2"></i>
+                                        {{ template.name }}
+                                    </h6>
+                                    <p class="card-text text-muted small">
+                                        <strong>Tema:</strong> {{ template.theme }}<br>
+                                        <strong>Campos:</strong> {{ template.fields.count }}<br>
+                                        <strong>Creada:</strong> {{ template.created_at|date:"d/m/Y" }}
+                                    </p>
+                                    <button class="btn btn-sm btn-success" onclick="associateTemplate({{ template.id }}, '{{ template.name }}')">
+                                        <i class="bi bi-link me-1"></i>Asociar
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Remove Template Modal -->
+<div class="modal fade" id="removeTemplateModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-exclamation-triangle text-warning me-2"></i>
+                    Desasociar Plantilla
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>¿Estás seguro de que quieres desasociar la plantilla <strong id="removeTemplateName"></strong> de esta categoría?</p>
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle me-2"></i>
+                    <strong>Nota:</strong> La plantilla no se eliminará, solo se desasociará de esta categoría.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-warning" id="confirmRemoveTemplate">
+                    <i class="bi bi-unlink me-2"></i>Desasociar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Associate Template Modal -->
+<div class="modal fade" id="associateTemplateModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-link text-success me-2"></i>
+                    Asociar Plantilla
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>¿Estás seguro de que quieres asociar la plantilla <strong id="associateTemplateName"></strong> a esta categoría?</p>
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle me-2"></i>
+                    <strong>Nota:</strong> La plantilla estará disponible para esta categoría en los kiosks.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-success" id="confirmAssociateTemplate">
+                    <i class="bi bi-link me-2"></i>Asociar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+{{ block.super }}
+<style>
+    .breadcrumb {
+        background: var(--neutral-light);
+        border-radius: 10px;
+        padding: 1rem 1.5rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .breadcrumb-item a {
+        color: var(--primary-dark);
+        text-decoration: none;
+    }
+    
+    .breadcrumb-item.active {
+        color: var(--neutral-gray);
+    }
+    
+    .card {
+        border-radius: 15px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        border: 1px solid rgba(0,0,0,0.05);
+    }
+    
+    .card-header {
+        background: linear-gradient(135deg, var(--primary-light) 0%, var(--primary-dark) 100%);
+        color: var(--neutral-light);
+        border-radius: 15px 15px 0 0 !important;
+        border: none;
+    }
+    
+    .table {
+        background: var(--neutral-light);
+        border-radius: 10px;
+        overflow: hidden;
+    }
+    
+    .table thead th {
+        background: var(--primary-light);
+        color: var(--neutral-light);
+        border: none;
+        font-weight: 600;
+    }
+    
+    .badge {
+        font-size: 0.75rem;
+        padding: 0.5rem 0.75rem;
+        border-radius: 8px;
+        font-weight: 600;
+    }
+    
+    .btn {
+        border-radius: 10px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        padding: 0.75rem 1.5rem;
+    }
+    
+    .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    }
+    
+    .btn-group .btn {
+        border-radius: 6px !important;
+        margin: 0 2px;
+        padding: 0.5rem 0.75rem;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<script>
+let currentRemoveTemplateId = null;
+let currentAssociateTemplateId = null;
+
+function viewTemplate(templateId) {
+    // Implementar vista de plantilla
+    showNotification('Función de vista de plantilla en desarrollo', 'info');
+}
+
+function editTemplate(templateId) {
+    // Implementar edición de plantilla
+    showNotification('Función de edición de plantilla en desarrollo', 'info');
+}
+
+function previewTemplate(templateId) {
+    // Implementar vista previa de plantilla
+    showNotification('Función de vista previa en desarrollo', 'info');
+}
+
+function removeTemplate(templateId, templateName) {
+    // Mostrar modal de confirmación
+    currentRemoveTemplateId = templateId;
+    document.getElementById('removeTemplateName').textContent = templateName;
+    
+    const removeModal = new bootstrap.Modal(document.getElementById('removeTemplateModal'));
+    removeModal.show();
+}
+
+function associateTemplate(templateId, templateName) {
+    // Mostrar modal de confirmación
+    currentAssociateTemplateId = templateId;
+    document.getElementById('associateTemplateName').textContent = templateName;
+    
+    const associateModal = new bootstrap.Modal(document.getElementById('associateTemplateModal'));
+    associateModal.show();
+}
+
+// Confirmar desasociación
+document.getElementById('confirmRemoveTemplate').addEventListener('click', function() {
+    if (currentRemoveTemplateId) {
+        // Implementar lógica de desasociación
+        showNotification('Función de desasociación en desarrollo', 'info');
+        
+        const removeModal = bootstrap.Modal.getInstance(document.getElementById('removeTemplateModal'));
+        removeModal.hide();
+    }
+});
+
+// Confirmar asociación
+document.getElementById('confirmAssociateTemplate').addEventListener('click', function() {
+    if (currentAssociateTemplateId) {
+        // Implementar lógica de asociación
+        showNotification('Función de asociación en desarrollo', 'info');
+        
+        const associateModal = bootstrap.Modal.getInstance(document.getElementById('associateTemplateModal'));
+        associateModal.hide();
+    }
+});
+
+function showNotification(message, type = 'info') {
+    // Crear notificación personalizada
+    const notification = document.createElement('div');
+    notification.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+    notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    notification.innerHTML = `
+        <i class="bi bi-${type === 'info' ? 'info-circle' : type === 'warning' ? 'exclamation-triangle' : type === 'danger' ? 'x-circle' : 'check-circle'} me-2"></i>
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // Auto-remover después de 5 segundos
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.remove();
+        }
+    }, 5000);
+}
+</script>
+{% endblock %}

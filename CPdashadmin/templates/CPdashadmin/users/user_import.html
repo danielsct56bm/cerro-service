@@ -1,0 +1,37 @@
+{% extends 'CPdashadmin/base_admin.html' %}
+{% load admin_filters %}
+
+{% block admin_title %}Importar Usuarios{% endblock %}
+
+{% block content_title %}Importar Usuarios{% endblock %}
+{% block content_subtitle %}Importar usuarios desde archivo CSV{% endblock %}
+
+{% block admin_content %}
+<!-- Progress Steps -->
+{% include 'CPdashadmin/users/import/progress_steps.html' %}
+
+<!-- Step 1: Upload CSV -->
+{% if step == 1 %}
+{% include 'CPdashadmin/users/import/step1_upload.html' %}
+{% endif %}
+
+<!-- Step 2: Map Columns -->
+{% if step == 2 %}
+{% include 'CPdashadmin/users/import/step2_mapping.html' %}
+{% endif %}
+
+<!-- Step 3: Confirm Import -->
+{% if step == 3 %}
+{% include 'CPdashadmin/users/import/step3_confirmation.html' %}
+{% endif %}
+{% endblock %}
+
+{% block extra_css %}
+{{ block.super }}
+{% include 'CPdashadmin/users/import/import_styles.html' %}
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+{% include 'CPdashadmin/users/import/import_scripts.html' %}
+{% endblock %}

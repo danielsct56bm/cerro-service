@@ -1,0 +1,44 @@
+<!-- Header -->
+<nav class="navbar navbar-expand-lg navbar-dark">
+    <div class="container-fluid">
+        <!-- Logo y título -->
+        <div class="navbar-brand d-flex align-items-center">
+            {% if user.company.logo %}
+                <img src="{{ user.company.logo.url }}" alt="Logo" style="height: 40px; margin-right: 10px;">
+            {% endif %}
+            <span>{{ user.company.name }}</span>
+        </div>
+        
+        <!-- Botones de la derecha -->
+        <div class="navbar-nav ms-auto">
+            <!-- Botón de tema -->
+            <div class="nav-item me-3 d-flex align-items-center">
+                <button class="theme-toggle" onclick="toggleTheme()" title="Cambiar tema">
+                    <i class="bi bi-sun-fill" id="lightIcon"></i>
+                    <i class="bi bi-moon-fill" id="darkIcon" style="display: none;"></i>
+                </button>
+            </div>
+            
+            <!-- Dropdown del usuario -->
+            <div class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" role="button" data-bs-toggle="dropdown">
+                    {% if user.avatar %}
+                        <img src="{{ user.avatar.url }}" alt="Avatar" class="user-avatar me-2">
+                    {% else %}
+                        <div class="user-avatar me-2 d-flex align-items-center justify-content-center" style="background: var(--primary-light); color: var(--neutral-light); font-weight: bold;">
+                            {{ user.first_name|first|upper }}{{ user.last_name|first|upper }}
+                        </div>
+                    {% endif %}
+                    {{ user.get_full_name }}
+                </a>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    <li><a class="dropdown-item" href="{% url 'CPlogin:profile' %}"><i class="bi bi-person"></i> Mi Perfil</a></li>
+                    <li><a class="dropdown-item" href="{% url 'CPlogin:change_password' %}"><i class="bi bi-key"></i> Cambiar Contraseña</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item" href="{% url 'CPdashadmin:dashboard' %}"><i class="bi bi-house"></i> Dashboard</a></li>
+                    <li><a class="dropdown-item" href="{% url 'CPlogin:logout' %}"><i class="bi bi-box-arrow-right"></i> Cerrar Sesión</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</nav>

@@ -1,0 +1,438 @@
+{% extends 'CPdashadmin/base_admin.html' %}
+
+{% block admin_title %}Gestión de Tickets{% endblock %}
+
+{% block content_title %}Gestión de Tickets{% endblock %}
+{% block content_subtitle %}Administrar tickets del sistema{% endblock %}
+
+{% block admin_content %}
+<!-- Stats Cards -->
+<div class="stats-row mb-4">
+    <div class="row">
+        <div class="col-md-2">
+            <div class="stat-card-small">
+                <div class="stat-icon-small">
+                    <i class="fas fa-ticket-alt"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-number">{{ total_tickets }}</div>
+                    <div class="stat-label">Total Tickets</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="stat-card-small">
+                <div class="stat-icon-small">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-number">{{ open_tickets }}</div>
+                    <div class="stat-label">Abiertos</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="stat-card-small">
+                <div class="stat-icon-small">
+                    <i class="fas fa-spinner"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-number">{{ in_progress_tickets }}</div>
+                    <div class="stat-label">En Progreso</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="stat-card-small">
+                <div class="stat-icon-small">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-number">{{ resolved_tickets }}</div>
+                    <div class="stat-label">Resueltos</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="stat-card-small">
+                <div class="stat-icon-small">
+                    <i class="fas fa-times-circle"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-number">{{ closed_tickets }}</div>
+                    <div class="stat-label">Cerrados</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="stat-card-small">
+                <div class="stat-icon-small">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-number">{{ tickets.paginator.num_pages }}</div>
+                    <div class="stat-label">Páginas</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filters Section -->
+<div class="filters-section mb-4">
+    <div class="row">
+        <div class="col-md-3">
+            <div class="input-group">
+                <input type="text" class="form-control" id="searchTickets" placeholder="Buscar tickets..." value="{{ search }}">
+                <button class="btn btn-primary" type="button" onclick="searchTickets()">
+                    <i class="fas fa-search"></i>
+                </button>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <select class="form-select" id="statusFilter">
+                <option value="">Todos los estados</option>
+                <option value="open" {% if status_filter == 'open' %}selected{% endif %}>Abierto</option>
+                <option value="in_progress" {% if status_filter == 'in_progress' %}selected{% endif %}>En Progreso</option>
+                <option value="resolved" {% if status_filter == 'resolved' %}selected{% endif %}>Resuelto</option>
+                <option value="closed" {% if status_filter == 'closed' %}selected{% endif %}>Cerrado</option>
+                <option value="canceled" {% if status_filter == 'canceled' %}selected{% endif %}>Cancelado</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <select class="form-select" id="priorityFilter">
+                <option value="">Todas las prioridades</option>
+                <option value="low" {% if priority_filter == 'low' %}selected{% endif %}>Baja</option>
+                <option value="normal" {% if priority_filter == 'normal' %}selected{% endif %}>Normal</option>
+                <option value="high" {% if priority_filter == 'high' %}selected{% endif %}>Alta</option>
+                <option value="urgent" {% if priority_filter == 'urgent' %}selected{% endif %}>Urgente</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <select class="form-select" id="categoryFilter">
+                <option value="">Todas las categorías</option>
+                {% for category in categories %}
+                    <option value="{{ category.id }}" {% if category_filter == category.id|stringformat:"s" %}selected{% endif %}>
+                        {{ category.name }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-2">
+            <a href="{% url 'CPdashadmin:create_ticket' %}" class="btn btn-success w-100">
+                <i class="fas fa-plus"></i> Nuevo
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Tickets Table -->
+<div class="table-responsive">
+    <table class="table table-hover">
+        <thead class="table-dark">
+            <tr>
+                <th>Código</th>
+                <th>Categoría</th>
+                <th>Solicitante</th>
+                <th>Asignado</th>
+                <th>Estado</th>
+                <th>Prioridad</th>
+                <th>Fecha Creación</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody id="ticketsTableBody">
+            {% for ticket in tickets %}
+            <tr>
+                <td>
+                    <span class="badge bg-secondary">{{ ticket.code }}</span>
+                </td>
+                <td>
+                    <div class="ticket-category">
+                        <strong>{{ ticket.category.name }}</strong>
+                        {% if ticket.subcategory %}
+                            <small class="text-muted d-block">{{ ticket.subcategory.name }}</small>
+                        {% endif %}
+                    </div>
+                </td>
+                <td>
+                    {% if ticket.requester.avatar %}
+                        <img src="{{ ticket.requester.avatar.url }}" alt="Avatar" class="rounded-circle me-1" style="width: 24px; height: 24px;">
+                    {% else %}
+                        <div class="rounded-circle me-1 d-inline-flex align-items-center justify-content-center" style="width: 24px; height: 24px; background: var(--primary-light); color: var(--neutral-light); font-size: 0.7rem;">
+                            {{ ticket.requester.first_name|first|upper }}{{ ticket.requester.last_name|first|upper }}
+                        </div>
+                    {% endif %}
+                    {{ ticket.requester.get_full_name|default:ticket.requester.username }}
+                </td>
+                <td>
+                    {% if ticket.assigned_to %}
+                        {% if ticket.assigned_to.avatar %}
+                            <img src="{{ ticket.assigned_to.avatar.url }}" alt="Avatar" class="rounded-circle me-1" style="width: 24px; height: 24px;">
+                        {% else %}
+                            <div class="rounded-circle me-1 d-inline-flex align-items-center justify-content-center" style="width: 24px; height: 24px; background: var(--primary-light); color: var(--neutral-light); font-size: 0.7rem;">
+                                {{ ticket.assigned_to.first_name|first|upper }}{{ ticket.assigned_to.last_name|first|upper }}
+                            </div>
+                        {% endif %}
+                        {{ ticket.assigned_to.get_full_name|default:ticket.assigned_to.username }}
+                    {% else %}
+                        <span class="text-muted">Sin asignar</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if ticket.status == 'open' %}
+                        <span class="badge bg-warning">Abierto</span>
+                    {% elif ticket.status == 'in_progress' %}
+                        <span class="badge bg-info">En Progreso</span>
+                    {% elif ticket.status == 'resolved' %}
+                        <span class="badge bg-success">Resuelto</span>
+                    {% elif ticket.status == 'closed' %}
+                        <span class="badge bg-secondary">Cerrado</span>
+                    {% elif ticket.status == 'canceled' %}
+                        <span class="badge bg-danger">Cancelado</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if ticket.priority == 'low' %}
+                        <span class="badge bg-secondary">Baja</span>
+                    {% elif ticket.priority == 'normal' %}
+                        <span class="badge bg-primary">Normal</span>
+                    {% elif ticket.priority == 'high' %}
+                        <span class="badge bg-warning">Alta</span>
+                    {% elif ticket.priority == 'urgent' %}
+                        <span class="badge bg-danger">Urgente</span>
+                    {% endif %}
+                </td>
+                <td>{{ ticket.created_at|date:"d/m/Y H:i" }}</td>
+                <td>
+                    <div class="btn-group" role="group">
+                        <button class="btn btn-sm btn-outline-primary" onclick="viewTicket({{ ticket.id }})" title="Ver detalles">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-warning" onclick="editTicket({{ ticket.id }})" title="Editar">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-success" onclick="assignTicket({{ ticket.id }})" title="Asignar">
+                            <i class="fas fa-user-plus"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-info" onclick="viewFormData({{ ticket.id }})" title="Ver formulario">
+                            <i class="fas fa-file-alt"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="8" class="text-center text-muted">
+                    <i class="fas fa-ticket-alt fa-2x mb-2"></i>
+                    <p>No hay tickets registrados</p>
+                    <a href="{% url 'CPdashadmin:create_ticket' %}" class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i>Crear primer ticket
+                    </a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Pagination -->
+{% if tickets.has_other_pages %}
+<nav aria-label="Paginación de tickets">
+    <ul class="pagination justify-content-center">
+        {% if tickets.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ tickets.previous_page_number }}{% if search %}&search={{ search }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if priority_filter %}&priority={{ priority_filter }}{% endif %}{% if category_filter %}&category={{ category_filter }}{% endif %}">Anterior</a>
+            </li>
+        {% endif %}
+        
+        {% for num in tickets.paginator.page_range %}
+            {% if tickets.number == num %}
+                <li class="page-item active">
+                    <span class="page-link">{{ num }}</span>
+                </li>
+            {% elif num > tickets.number|add:'-3' and num < tickets.number|add:'3' %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ num }}{% if search %}&search={{ search }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if priority_filter %}&priority={{ priority_filter }}{% endif %}{% if category_filter %}&category={{ category_filter }}{% endif %}">{{ num }}</a>
+                </li>
+            {% endif %}
+        {% endfor %}
+        
+        {% if tickets.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ tickets.next_page_number }}{% if search %}&search={{ search }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if priority_filter %}&priority={{ priority_filter }}{% endif %}{% if category_filter %}&category={{ category_filter }}{% endif %}">Siguiente</a>
+            </li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}
+{% endblock %}
+
+{% block extra_css %}
+{{ block.super }}
+<style>
+    .stats-row {
+        margin-bottom: 2rem;
+    }
+    
+    .stat-card-small {
+        background: var(--neutral-light);
+        border-radius: 10px;
+        padding: 1rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        display: flex;
+        align-items: center;
+        transition: transform 0.3s ease;
+    }
+    
+    .stat-card-small:hover {
+        transform: translateY(-2px);
+    }
+    
+    .stat-icon-small {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background: var(--primary-light);
+        color: var(--neutral-light);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 1rem;
+        font-size: 1.2rem;
+    }
+    
+    .stat-content {
+        flex: 1;
+    }
+    
+    .stat-number {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: var(--primary-dark);
+        margin-bottom: 0.25rem;
+    }
+    
+    .stat-label {
+        font-size: 0.8rem;
+        color: var(--neutral-gray);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .filters-section {
+        background: var(--neutral-light);
+        border-radius: 10px;
+        padding: 1.5rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .table {
+        background: var(--neutral-light);
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .table thead th {
+        border: none;
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.8rem;
+        letter-spacing: 0.5px;
+    }
+    
+    .table tbody tr {
+        transition: background-color 0.3s ease;
+    }
+    
+    .table tbody tr:hover {
+        background-color: rgba(var(--primary-light-rgb), 0.1);
+    }
+    
+    .ticket-category {
+        max-width: 200px;
+    }
+    
+    .badge {
+        font-size: 0.7rem;
+        padding: 0.4rem 0.6rem;
+    }
+    
+    .btn-group .btn {
+        border-radius: 4px !important;
+        margin: 0 1px;
+    }
+    
+    .pagination .page-link {
+        color: var(--primary-dark);
+        border-color: var(--neutral-gray);
+    }
+    
+    .pagination .page-item.active .page-link {
+        background-color: var(--primary-dark);
+        border-color: var(--primary-dark);
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<script>
+function searchTickets() {
+    const searchTerm = document.getElementById('searchTickets').value;
+    const statusFilter = document.getElementById('statusFilter').value;
+    const priorityFilter = document.getElementById('priorityFilter').value;
+    const categoryFilter = document.getElementById('categoryFilter').value;
+    
+    // Construir URL con parámetros
+    let url = '{% url "CPdashadmin:ticket_management" %}?';
+    if (searchTerm) url += `search=${encodeURIComponent(searchTerm)}&`;
+    if (statusFilter) url += `status=${encodeURIComponent(statusFilter)}&`;
+    if (priorityFilter) url += `priority=${encodeURIComponent(priorityFilter)}&`;
+    if (categoryFilter) url += `category=${encodeURIComponent(categoryFilter)}&`;
+    
+    window.location.href = url;
+}
+
+function viewTicket(ticketId) {
+    // Implementar vista de ticket
+    alert('Función de vista en desarrollo - Ticket ID: ' + ticketId);
+}
+
+function editTicket(ticketId) {
+    // Implementar edición de ticket
+    alert('Función de edición en desarrollo - Ticket ID: ' + ticketId);
+}
+
+function assignTicket(ticketId) {
+    // Implementar asignación de ticket
+    alert('Función de asignación en desarrollo - Ticket ID: ' + ticketId);
+}
+
+function viewFormData(ticketId) {
+    // Implementar vista de datos del formulario
+    alert('Función de vista de formulario en desarrollo - Ticket ID: ' + ticketId);
+}
+
+// Búsqueda en tiempo real
+document.getElementById('searchTickets').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        searchTickets();
+    }
+});
+
+// Filtros automáticos
+document.getElementById('statusFilter').addEventListener('change', function() {
+    searchTickets();
+});
+
+document.getElementById('priorityFilter').addEventListener('change', function() {
+    searchTickets();
+});
+
+document.getElementById('categoryFilter').addEventListener('change', function() {
+    searchTickets();
+});
+</script>
+{% endblock %}

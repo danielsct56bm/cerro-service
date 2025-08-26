@@ -1,0 +1,554 @@
+{% extends 'base.html' %}
+
+{% block title %}{% block admin_title %}Panel de Administración{% endblock %} {{ user.company.name }} {% endblock %}
+
+{% block extra_css %}
+{{ block.super }}
+<style>
+    /* Reset para ocupar toda la pantalla */
+    body {
+        margin: 0;
+        padding: 0;
+        overflow-x: hidden;
+    }
+    
+    /* Override del main del base.html */
+    main {
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+    
+    main .container {
+        padding: 0 !important;
+        margin: 0 !important;
+        max-width: none !important;
+    }
+    
+    .admin-container {
+        min-height: 100vh;
+        background: var(--bg-color);
+        display: flex;
+        flex-direction: column;
+        margin: 0;
+        padding: 0;
+    }
+    
+    .navbar {
+        background: var(--primary-dark);
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        flex-shrink: 0;
+        padding: 0.5rem 1rem;
+    }
+    
+    .navbar-brand {
+        color: var(--neutral-light) !important;
+        font-weight: bold;
+        font-size: 1.2rem;
+    }
+    
+    .navbar-nav .nav-link {
+        color: var(--neutral-light) !important;
+        transition: color 0.3s ease;
+    }
+    
+    .navbar-nav .nav-link:hover {
+        color: var(--primary-light) !important;
+    }
+    
+    .user-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        border: 2px solid var(--primary-light);
+        object-fit: cover;
+    }
+    
+    .main-content {
+        flex: 1;
+        display: flex;
+        min-height: calc(100vh - 80px);
+        margin: 0;
+        padding: 0;
+        transition: all 0.3s ease;
+    }
+    
+    .sidebar {
+        background: var(--sidebar-bg);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        width: 280px;
+        flex-shrink: 0;
+        overflow-y: auto;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+    }
+    
+    .sidebar.collapsed {
+        width: 60px;
+    }
+    
+    .sidebar-header {
+        padding: 1.5rem;
+        border-bottom: 1px solid var(--border-color);
+        background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-light) 100%);
+        color: var(--neutral-light);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        position: relative;
+        z-index: 100;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+    
+    .sidebar-header h4 {
+        margin: 0;
+        font-size: 1.1rem;
+        font-weight: 600;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        flex: 1;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    }
+    
+    .sidebar.collapsed .sidebar-header h4 {
+        opacity: 0;
+        display: none;
+    }
+    
+    .sidebar-toggle {
+        background: none;
+        border: none;
+        color: var(--neutral-light);
+        font-size: 1.4rem;
+        cursor: pointer;
+        padding: 0.75rem;
+        border-radius: 6px;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 40px;
+        min-height: 40px;
+        z-index: 1000;
+    }
+    
+    .sidebar-toggle:hover {
+        background: rgba(255, 255, 255, 0.15);
+        transform: scale(1.1);
+    }
+    
+    .sidebar-toggle:active {
+        transform: scale(0.95);
+    }
+    
+    .sidebar-toggle:focus {
+        outline: none;
+        box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.3);
+    }
+    
+    /* Animación del ícono del botón */
+    .sidebar-toggle i {
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        font-size: 1.2rem;
+    }
+    
+    .sidebar.collapsed .sidebar-toggle i {
+        transform: rotate(180deg);
+    }
+    
+
+    
+    .sidebar-nav {
+        list-style: none;
+        padding: 1rem 0;
+        margin: 0;
+    }
+    
+    .sidebar-nav li {
+        margin-bottom: 0.25rem;
+    }
+    
+    .sidebar-nav a {
+        display: flex;
+        align-items: center;
+        padding: 0.75rem 1.5rem;
+        color: var(--text-color);
+        text-decoration: none;
+        border-radius: 0;
+        transition: all 0.3s ease;
+        border-left: 3px solid transparent;
+    }
+    
+    .sidebar-nav a:hover,
+    .sidebar-nav a.active {
+        background: var(--primary-light);
+        color: var(--neutral-light);
+        border-left-color: var(--accent-green);
+    }
+    
+    .sidebar-nav a.disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+    
+    .sidebar-nav a.disabled:hover {
+        background: none;
+        color: var(--text-color);
+        border-left-color: transparent;
+    }
+    
+    .sidebar-nav i {
+        margin-right: 0.75rem;
+        width: 20px;
+        text-align: center;
+        font-size: 1.1rem;
+        transition: margin 0.3s ease;
+        color: inherit;
+    }
+    
+    .sidebar.collapsed .sidebar-nav i {
+        margin-right: 0;
+        font-size: 1.2rem;
+    }
+    
+    .sidebar.collapsed .nav-section-header i {
+        margin-right: 0;
+        font-size: 1.3rem;
+        color: var(--text-color);
+    }
+    
+    .sidebar-nav .nav-text {
+        font-weight: 500;
+        transition: opacity 0.3s ease;
+    }
+    
+    .sidebar.collapsed .sidebar-nav .nav-text {
+        opacity: 0;
+        display: none;
+    }
+    
+    /* Nav Sections */
+    .nav-section {
+        margin-bottom: 0.5rem;
+    }
+    
+    .nav-section-header {
+        display: flex;
+        align-items: center;
+        padding: 0.75rem 1.5rem;
+        color: var(--text-color);
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border-left: 3px solid transparent;
+        font-weight: 600;
+    }
+    
+    .nav-section-header:hover {
+        background: var(--primary-light);
+        color: var(--neutral-light);
+        border-left-color: var(--accent-green);
+    }
+    
+    .nav-section-header .section-toggle {
+        margin-left: auto;
+        transition: transform 0.3s ease;
+    }
+    
+    .nav-section.expanded .section-toggle {
+        transform: rotate(180deg);
+    }
+    
+    .nav-section-items {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.3s ease;
+    }
+    
+    .nav-section.expanded .nav-section-items {
+        max-height: 300px;
+    }
+    
+    .nav-section-items li a {
+        padding-left: 3rem;
+        font-size: 0.9rem;
+    }
+    
+    /* Cuando está colapsado, mostrar solo íconos de menús principales */
+    .sidebar.collapsed .nav-section {
+        margin-bottom: 0.25rem;
+    }
+    
+    .sidebar.collapsed .nav-section-header {
+        padding: 0.75rem;
+        justify-content: center;
+        border-left: none;
+    }
+    
+    .sidebar.collapsed .nav-section-header .nav-text,
+    .sidebar.collapsed .nav-section-header .section-toggle {
+        display: none;
+    }
+    
+    .sidebar.collapsed .nav-section-header i {
+        margin-right: 0;
+        font-size: 1.1rem;
+    }
+    
+    .sidebar.collapsed .nav-section-items {
+        display: none;
+    }
+    
+    /* Mostrar tooltips cuando está colapsado */
+    .sidebar.collapsed .nav-section-header {
+        position: relative;
+    }
+    
+    .sidebar.collapsed .nav-section-header:hover::after {
+        content: attr(data-title);
+        position: absolute;
+        left: 100%;
+        top: 50%;
+        transform: translateY(-50%);
+        background: var(--primary-dark);
+        color: var(--neutral-light);
+        padding: 0.5rem 0.75rem;
+        border-radius: 4px;
+        font-size: 0.8rem;
+        white-space: nowrap;
+        z-index: 1000;
+        margin-left: 0.5rem;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    }
+    
+    .content-area {
+        flex: 1;
+        background: var(--content-bg);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        margin: 1rem;
+        border-radius: 15px;
+        overflow-y: auto;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    .sidebar.collapsed + .content-area {
+        margin-left: 0.5rem;
+    }
+    
+    .content-header {
+        padding: 2rem 2rem 1rem;
+        border-bottom: 1px solid var(--border-color);
+    }
+    
+    .content-header h1 {
+        color: var(--text-color);
+        font-size: 1.8rem;
+        font-weight: 600;
+        margin: 0;
+    }
+    
+    .content-header p {
+        color: var(--neutral-gray);
+        margin: 0.5rem 0 0;
+        font-size: 1rem;
+    }
+    
+    .content-body {
+        padding: 2rem;
+    }
+    
+    .dropdown-menu {
+        border: none;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        border-radius: 8px;
+        background: var(--sidebar-bg);
+    }
+    
+    .dropdown-item {
+        color: var(--text-color);
+        transition: background-color 0.3s ease;
+    }
+    
+    .dropdown-item:hover {
+        background-color: var(--primary-light);
+        color: var(--neutral-light);
+    }
+    
+    .alert {
+        border-radius: 8px;
+        border: none;
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+        font-size: 0.9rem;
+    }
+    
+    .alert-success {
+        background: var(--accent-green);
+        color: var(--neutral-light);
+    }
+    
+    .alert-danger {
+        background: #dc3545;
+        color: var(--neutral-light);
+    }
+    
+    .alert-warning {
+        background: #ffc107;
+        color: var(--primary-dark);
+    }
+    
+    .alert-info {
+        background: var(--primary-light);
+        color: var(--neutral-light);
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .main-content {
+            flex-direction: column;
+        }
+        
+        .sidebar {
+            width: 100%;
+            order: 2;
+        }
+        
+        .sidebar.collapsed {
+            width: 100%;
+        }
+        
+        .content-area {
+            order: 1;
+            margin: 0.5rem;
+        }
+        
+        .sidebar.collapsed + .content-area {
+            margin-left: 0.5rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="admin-container">
+    <!-- Include Header -->
+    {% include 'CPdashadmin/includes/header.html' %}
+    
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Include Sidebar -->
+        {% include 'CPdashadmin/includes/sidebar.html' %}
+        
+        <!-- Content Area -->
+        <div class="content-area">
+            <!-- Content Header -->
+            <div class="content-header">
+                <h1>{% block content_title %}Dashboard{% endblock %}</h1>
+                <p>{% block content_subtitle %}Panel de control del sistema{% endblock %}</p>
+            </div>
+            
+            <!-- Content Body -->
+            <div class="content-body">
+                <!-- Mensajes -->
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+                
+                {% block admin_content %}{% endblock %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<script>
+// Auto-hide alerts after 5 seconds
+document.addEventListener('DOMContentLoaded', function() {
+    const alerts = document.querySelectorAll('.alert');
+    alerts.forEach(function(alert) {
+        setTimeout(function() {
+            const bsAlert = new bootstrap.Alert(alert);
+            bsAlert.close();
+        }, 5000);
+    });
+    
+    // Sidebar toggle functionality
+    const sidebarToggle = document.getElementById('sidebarToggle');
+    const sidebar = document.getElementById('sidebar');
+    
+    if (sidebarToggle && sidebar) {
+        sidebarToggle.addEventListener('click', function() {
+            sidebar.classList.toggle('collapsed');
+            
+            // Save state to localStorage
+            const isCollapsed = sidebar.classList.contains('collapsed');
+            localStorage.setItem('sidebarCollapsed', isCollapsed);
+        });
+        
+        // Restore state from localStorage
+        const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+        if (isCollapsed) {
+            sidebar.classList.add('collapsed');
+        }
+    }
+    
+    // Nav section toggle functionality
+    const navSections = document.querySelectorAll('.nav-section');
+    navSections.forEach(function(section) {
+        const header = section.querySelector('.nav-section-header');
+        const items = section.querySelector('.nav-section-items');
+        
+        if (header && items) {
+            header.addEventListener('click', function() {
+                section.classList.toggle('expanded');
+                
+                // Save expanded sections to localStorage
+                const expandedSections = Array.from(document.querySelectorAll('.nav-section.expanded'))
+                    .map(s => s.querySelector('.nav-section-header .nav-text').textContent);
+                localStorage.setItem('expandedSections', JSON.stringify(expandedSections));
+            });
+        }
+    });
+    
+    // Restore expanded sections from localStorage
+    const expandedSections = JSON.parse(localStorage.getItem('expandedSections') || '[]');
+    expandedSections.forEach(function(sectionName) {
+        const section = Array.from(document.querySelectorAll('.nav-section')).find(s => 
+            s.querySelector('.nav-section-header .nav-text').textContent === sectionName
+        );
+        if (section) {
+            section.classList.add('expanded');
+        }
+    });
+    
+    // Actualizar íconos del botón de tema según el tema actual
+    function updateThemeIcons() {
+        const currentTheme = document.documentElement.getAttribute('data-bs-theme');
+        const lightIcon = document.getElementById('lightIcon');
+        const darkIcon = document.getElementById('darkIcon');
+        
+        if (lightIcon && darkIcon) {
+            lightIcon.style.display = currentTheme === 'light' ? 'inline' : 'none';
+            darkIcon.style.display = currentTheme === 'dark' ? 'inline' : 'none';
+        }
+    }
+    
+    // Ejecutar al cargar la página
+    updateThemeIcons();
+    
+    // Sobrescribir la función global para actualizar íconos
+    const originalToggleTheme = window.toggleTheme;
+    window.toggleTheme = function() {
+        originalToggleTheme();
+        setTimeout(updateThemeIcons, 100); // Pequeño delay para asegurar que el tema cambió
+    };
+});
+</script>
+{% endblock %}

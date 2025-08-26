@@ -1,0 +1,535 @@
+{% extends 'base.html' %}
+
+{% block title %}Mi Perfil - Panel Técnico{% endblock %}
+
+{% block extra_css %}
+<style>
+    .technician-container {
+        min-height: 100vh;
+        background: var(--neutral-gray);
+    }
+    
+    .navbar {
+        background: var(--primary-dark);
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    
+    .navbar-brand {
+        color: var(--neutral-light) !important;
+        font-weight: bold;
+        font-size: 1.2rem;
+    }
+    
+    .navbar-nav .nav-link {
+        color: var(--neutral-light) !important;
+        transition: color 0.3s ease;
+    }
+    
+    .navbar-nav .nav-link:hover {
+        color: var(--primary-light) !important;
+    }
+    
+    .user-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        border: 2px solid var(--primary-light);
+        object-fit: cover;
+    }
+    
+    .main-content {
+        padding: 2rem;
+    }
+    
+    .profile-header {
+        background: var(--neutral-light);
+        border-radius: 15px;
+        padding: 2rem;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        margin-bottom: 2rem;
+        text-align: center;
+    }
+    
+    .profile-avatar {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        border: 4px solid var(--primary-light);
+        object-fit: cover;
+        margin: 0 auto 1rem;
+    }
+    
+    .profile-avatar-placeholder {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        border: 4px solid var(--primary-light);
+        background: var(--primary-light);
+        color: var(--neutral-light);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 3rem;
+        font-weight: bold;
+        margin: 0 auto 1rem;
+    }
+    
+    .profile-name {
+        color: var(--primary-dark);
+        font-size: 1.8rem;
+        font-weight: bold;
+        margin-bottom: 0.5rem;
+    }
+    
+    .profile-title {
+        color: var(--neutral-gray);
+        font-size: 1.1rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .profile-department {
+        color: var(--primary-light);
+        font-weight: 600;
+        margin-bottom: 1rem;
+    }
+    
+    .profile-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 1rem;
+        margin-top: 1.5rem;
+    }
+    
+    .stat-item {
+        text-align: center;
+        padding: 1rem;
+        background: var(--neutral-gray);
+        border-radius: 10px;
+    }
+    
+    .stat-number {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: var(--primary-dark);
+        margin-bottom: 0.25rem;
+    }
+    
+    .stat-label {
+        color: var(--neutral-gray);
+        font-size: 0.9rem;
+    }
+    
+    .profile-sections {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+        gap: 2rem;
+    }
+    
+    .profile-section {
+        background: var(--neutral-light);
+        border-radius: 15px;
+        padding: 2rem;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    
+    .section-title {
+        color: var(--primary-dark);
+        font-size: 1.3rem;
+        font-weight: bold;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+    }
+    
+    .section-title i {
+        margin-right: 0.75rem;
+        color: var(--primary-light);
+    }
+    
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+    
+    .form-label {
+        color: var(--primary-dark);
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+    
+    .form-control {
+        border: 2px solid var(--neutral-gray);
+        border-radius: 8px;
+        padding: 0.75rem;
+        width: 100%;
+        transition: border-color 0.3s ease;
+    }
+    
+    .form-control:focus {
+        border-color: var(--primary-light);
+        box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+        outline: none;
+    }
+    
+    .form-control:disabled {
+        background-color: var(--neutral-gray);
+        color: var(--neutral-gray);
+        cursor: not-allowed;
+    }
+    
+    .btn {
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        border: none;
+        cursor: pointer;
+    }
+    
+    .btn-primary {
+        background: var(--primary-light);
+        color: var(--neutral-light);
+    }
+    
+    .btn-primary:hover {
+        background: var(--primary-dark);
+        transform: translateY(-2px);
+    }
+    
+    .btn-secondary {
+        background: var(--neutral-gray);
+        color: var(--primary-dark);
+    }
+    
+    .btn-secondary:hover {
+        background: var(--primary-dark);
+        color: var(--neutral-light);
+        transform: translateY(-2px);
+    }
+    
+    .info-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid var(--neutral-gray);
+    }
+    
+    .info-item:last-child {
+        border-bottom: none;
+    }
+    
+    .info-label {
+        font-weight: 600;
+        color: var(--primary-dark);
+    }
+    
+    .info-value {
+        color: var(--neutral-gray);
+        text-align: right;
+    }
+    
+    .dropdown-menu {
+        border: none;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        border-radius: 8px;
+    }
+    
+    .dropdown-item {
+        color: var(--primary-dark);
+        transition: background-color 0.3s ease;
+    }
+    
+    .dropdown-item:hover {
+        background-color: var(--primary-light);
+        color: var(--neutral-light);
+    }
+    
+    .alert {
+        border-radius: 8px;
+        border: none;
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+        font-size: 0.9rem;
+    }
+    
+    .alert-success {
+        background: var(--accent-green);
+        color: var(--neutral-light);
+    }
+    
+    .alert-danger {
+        background: #dc3545;
+        color: var(--neutral-light);
+    }
+    
+    .avatar-upload {
+        text-align: center;
+        margin-bottom: 1.5rem;
+    }
+    
+    .avatar-preview {
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        border: 3px solid var(--primary-light);
+        object-fit: cover;
+        margin: 0 auto 1rem;
+    }
+    
+    .avatar-preview-placeholder {
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        border: 3px solid var(--primary-light);
+        background: var(--primary-light);
+        color: var(--neutral-light);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        font-weight: bold;
+        margin: 0 auto 1rem;
+    }
+    
+    .file-input-wrapper {
+        position: relative;
+        display: inline-block;
+    }
+    
+    .file-input {
+        position: absolute;
+        left: -9999px;
+    }
+    
+    .file-input-label {
+        display: inline-block;
+        padding: 0.5rem 1rem;
+        background: var(--primary-light);
+        color: var(--neutral-light);
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .file-input-label:hover {
+        background: var(--primary-dark);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="technician-container">
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg">
+        <div class="container">
+            <a class="navbar-brand" href="{% url 'CPdashtechnician:dashboard' %}">
+                {% if company.logo %}
+                    <img src="{{ company.logo.url }}" alt="Logo" style="height: 30px; margin-right: 10px;">
+                {% endif %}
+                Panel Técnico
+            </a>
+            
+            <div class="navbar-nav ms-auto">
+                <div class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" role="button" data-bs-toggle="dropdown">
+                        {% if user.avatar %}
+                            <img src="{{ user.avatar.url }}" alt="Avatar" class="user-avatar me-2">
+                        {% else %}
+                            <div class="user-avatar me-2 d-flex align-items-center justify-content-center" style="background: var(--primary-light); color: var(--neutral-light);">
+                                {{ user.first_name|first|upper }}{{ user.last_name|first|upper }}
+                            </div>
+                        {% endif %}
+                        {{ user.get_full_name|default:user.username }}
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="{% url 'CPdashtechnician:dashboard' %}">
+                            <i class="fas fa-home me-2"></i>Dashboard
+                        </a></li>
+                        <li><a class="dropdown-item" href="{% url 'CPdashtechnician:my_tickets' %}">
+                            <i class="fas fa-ticket-alt me-2"></i>Mis Tickets
+                        </a></li>
+                        <li><a class="dropdown-item" href="{% url 'CPlogin:change_password' %}">
+                            <i class="fas fa-key me-2"></i>Cambiar Contraseña
+                        </a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="{% url 'CPlogin:logout' %}">
+                            <i class="fas fa-sign-out-alt me-2"></i>Cerrar Sesión
+                        </a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="container">
+            <!-- Mensajes -->
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+            
+            <!-- Profile Header -->
+            <div class="profile-header">
+                {% if user.avatar %}
+                    <img src="{{ user.avatar.url }}" alt="Avatar" class="profile-avatar">
+                {% else %}
+                    <div class="profile-avatar-placeholder">
+                        {{ user.first_name|first|upper }}{{ user.last_name|first|upper }}
+                    </div>
+                {% endif %}
+                
+                <h1 class="profile-name">{{ user.get_full_name|default:user.username }}</h1>
+                <p class="profile-title">{{ user.title|default:"Técnico" }}</p>
+                <p class="profile-department">{{ user.department|default:"Sin departamento" }}</p>
+                
+                <div class="profile-stats">
+                    <div class="stat-item">
+                        <div class="stat-number">{{ total_assigned }}</div>
+                        <div class="stat-label">Total Asignados</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number">{{ active_tickets }}</div>
+                        <div class="stat-label">Tickets Activos</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number">{{ completed_tickets }}</div>
+                        <div class="stat-label">Completados</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Profile Sections -->
+            <div class="profile-sections">
+                <!-- Personal Information -->
+                <div class="profile-section">
+                    <h2 class="section-title">
+                        <i class="fas fa-user"></i>
+                        Información Personal
+                    </h2>
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="form-group">
+                            <label for="first_name" class="form-label">Nombre</label>
+                            <input type="text" class="form-control" id="first_name" name="first_name" 
+                                   value="{{ user.first_name }}" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="last_name" class="form-label">Apellidos</label>
+                            <input type="text" class="form-control" id="last_name" name="last_name" 
+                                   value="{{ user.last_name }}" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="email" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="email" name="email" 
+                                   value="{{ user.email }}" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="phone" class="form-label">Teléfono</label>
+                            <input type="tel" class="form-control" id="phone" name="phone" 
+                                   value="{{ user.phone|default:'' }}">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="title" class="form-label">Cargo</label>
+                            <input type="text" class="form-control" id="title" name="title" 
+                                   value="{{ user.title|default:'' }}">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="department" class="form-label">Departamento</label>
+                            <input type="text" class="form-control" id="department" name="department" 
+                                   value="{{ user.department|default:'' }}">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="location" class="form-label">Ubicación</label>
+                            <input type="text" class="form-control" id="location" name="location" 
+                                   value="{{ user.location|default:'' }}">
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>Guardar Cambios
+                        </button>
+                    </form>
+                </div>
+                
+                <!-- Work Information -->
+                <div class="profile-section">
+                    <h2 class="section-title">
+                        <i class="fas fa-briefcase"></i>
+                        Información Laboral
+                    </h2>
+                    
+                    <div class="info-item">
+                        <span class="info-label">SAP ID:</span>
+                        <span class="info-value">{{ user.sap_id|default:"No asignado" }}</span>
+                    </div>
+                    
+                    <div class="info-item">
+                        <span class="info-label">Número de Empleado:</span>
+                        <span class="info-value">{{ user.employee_number|default:"No asignado" }}</span>
+                    </div>
+                    
+                    <div class="info-item">
+                        <span class="info-label">Empresa:</span>
+                        <span class="info-value">{{ user.company.name }}</span>
+                    </div>
+                    
+                    <div class="info-item">
+                        <span class="info-label">Rol:</span>
+                        <span class="info-value">Técnico</span>
+                    </div>
+                    
+                    <div class="info-item">
+                        <span class="info-label">Fecha de Registro:</span>
+                        <span class="info-value">{{ user.date_joined|date:"d/m/Y" }}</span>
+                    </div>
+                    
+                    <div class="info-item">
+                        <span class="info-label">Último Acceso:</span>
+                        <span class="info-value">{{ user.last_login|date:"d/m/Y H:i"|default:"Nunca" }}</span>
+                    </div>
+                    
+                    <div class="info-item">
+                        <span class="info-label">Estado:</span>
+                        <span class="info-value">
+                            {% if user.can_access %}
+                                <span style="color: var(--accent-green);">Activo</span>
+                            {% else %}
+                                <span style="color: #dc3545;">Inactivo</span>
+                            {% endif %}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Auto-hide alerts after 5 seconds
+document.addEventListener('DOMContentLoaded', function() {
+    const alerts = document.querySelectorAll('.alert');
+    alerts.forEach(function(alert) {
+        setTimeout(function() {
+            const bsAlert = new bootstrap.Alert(alert);
+            bsAlert.close();
+        }, 5000);
+    });
+});
+</script>
+{% endblock %}

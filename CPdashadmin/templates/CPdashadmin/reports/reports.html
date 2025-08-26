@@ -1,0 +1,369 @@
+{% extends 'CPdashadmin/base_admin.html' %}
+
+{% block admin_title %}Reportes{% endblock %}
+
+{% block content_title %}Reportes y Estadísticas{% endblock %}
+{% block content_subtitle %}Análisis detallado del sistema{% endblock %}
+
+{% block admin_content %}
+<!-- Stats Overview -->
+<div class="stats-overview">
+    <div class="row">
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-number">{{ new_users_today }}</div>
+                    <div class="stat-label">Usuarios Nuevos Hoy</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-ticket-alt"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-number">{{ new_tickets_today }}</div>
+                    <div class="stat-label">Tickets Nuevos Hoy</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-number">{{ new_users_week }}</div>
+                    <div class="stat-label">Usuarios Esta Semana</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-chart-bar"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-number">{{ new_tickets_week }}</div>
+                    <div class="stat-label">Tickets Esta Semana</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Section -->
+<div class="charts-section">
+    <div class="row">
+        <!-- Users by Department -->
+        <div class="col-md-6">
+            <div class="chart-card">
+                <h3>Usuarios por Departamento</h3>
+                <div class="chart-container">
+                    {% if users_by_department %}
+                        <div class="chart-data">
+                            {% for dept in users_by_department %}
+                                <div class="chart-item">
+                                    <div class="chart-label">{{ dept.department|default:"Sin Departamento" }}</div>
+                                    <div class="chart-bar">
+                                        <div class="chart-fill" style="width: {{ dept.count|floatformat:0 }}%"></div>
+                                    </div>
+                                    <div class="chart-value">{{ dept.count }}</div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-muted">No hay datos de departamentos</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Users by Status -->
+        <div class="col-md-6">
+            <div class="chart-card">
+                <h3>Usuarios por Estado</h3>
+                <div class="chart-container">
+                    {% if users_by_status %}
+                        <div class="chart-data">
+                            {% for status in users_by_status %}
+                                <div class="chart-item">
+                                    <div class="chart-label">
+                                        {% if status.is_active %}
+                                            Activos
+                                        {% else %}
+                                            Inactivos
+                                        {% endif %}
+                                    </div>
+                                    <div class="chart-bar">
+                                        <div class="chart-fill" style="width: {{ status.count|floatformat:0 }}%"></div>
+                                    </div>
+                                    <div class="chart-value">{{ status.count }}</div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-muted">No hay datos de estados</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row mt-4">
+        <!-- Tickets by Status -->
+        <div class="col-md-6">
+            <div class="chart-card">
+                <h3>Tickets por Estado</h3>
+                <div class="chart-container">
+                    {% if tickets_by_status %}
+                        <div class="chart-data">
+                            {% for status in tickets_by_status %}
+                                <div class="chart-item">
+                                    <div class="chart-label">{{ status.status|title }}</div>
+                                    <div class="chart-bar">
+                                        <div class="chart-fill" style="width: {{ status.count|floatformat:0 }}%"></div>
+                                    </div>
+                                    <div class="chart-value">{{ status.count }}</div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-muted">No hay tickets registrados</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Tickets by Priority -->
+        <div class="col-md-6">
+            <div class="chart-card">
+                <h3>Tickets por Prioridad</h3>
+                <div class="chart-container">
+                    {% if tickets_by_priority %}
+                        <div class="chart-data">
+                            {% for priority in tickets_by_priority %}
+                                <div class="chart-item">
+                                    <div class="chart-label">{{ priority.priority|title }}</div>
+                                    <div class="chart-bar">
+                                        <div class="chart-fill" style="width: {{ priority.count|floatformat:0 }}%"></div>
+                                    </div>
+                                    <div class="chart-value">{{ priority.count }}</div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-muted">No hay datos de prioridades</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Monthly Trends -->
+<div class="trends-section">
+    <div class="row">
+        <div class="col-md-6">
+            <div class="trend-card">
+                <h3>Tendencias Mensuales - Usuarios</h3>
+                <div class="trend-data">
+                    <div class="trend-item">
+                        <span class="trend-label">Este mes:</span>
+                        <span class="trend-value">{{ new_users_month }}</span>
+                    </div>
+                    <div class="trend-item">
+                        <span class="trend-label">Esta semana:</span>
+                        <span class="trend-value">{{ new_users_week }}</span>
+                    </div>
+                    <div class="trend-item">
+                        <span class="trend-label">Hoy:</span>
+                        <span class="trend-value">{{ new_users_today }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="trend-card">
+                <h3>Tendencias Mensuales - Tickets</h3>
+                <div class="trend-data">
+                    <div class="trend-item">
+                        <span class="trend-label">Este mes:</span>
+                        <span class="trend-value">{{ new_tickets_month }}</span>
+                    </div>
+                    <div class="trend-item">
+                        <span class="trend-label">Esta semana:</span>
+                        <span class="trend-value">{{ new_tickets_week }}</span>
+                    </div>
+                    <div class="trend-item">
+                        <span class="trend-label">Hoy:</span>
+                        <span class="trend-value">{{ new_tickets_today }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+{{ block.super }}
+<style>
+    .stats-overview {
+        margin-bottom: 2rem;
+    }
+    
+    .stat-card {
+        background: linear-gradient(135deg, var(--primary-light) 0%, var(--primary-dark) 100%);
+        color: var(--neutral-light);
+        border-radius: 15px;
+        padding: 1.5rem;
+        text-align: center;
+        transition: transform 0.3s ease;
+        margin-bottom: 1rem;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-5px);
+    }
+    
+    .stat-icon {
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+        opacity: 0.8;
+    }
+    
+    .stat-number {
+        font-size: 2rem;
+        font-weight: bold;
+        margin-bottom: 0.5rem;
+    }
+    
+    .stat-label {
+        font-size: 0.9rem;
+        opacity: 0.9;
+    }
+    
+    .charts-section {
+        margin-bottom: 2rem;
+    }
+    
+    .chart-card {
+        background: var(--neutral-light);
+        border-radius: 15px;
+        padding: 1.5rem;
+        box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+        margin-bottom: 1rem;
+    }
+    
+    .chart-card h3 {
+        color: var(--primary-dark);
+        margin-bottom: 1rem;
+        font-size: 1.3rem;
+    }
+    
+    .chart-container {
+        min-height: 200px;
+    }
+    
+    .chart-item {
+        display: flex;
+        align-items: center;
+        margin-bottom: 1rem;
+        padding: 0.5rem 0;
+    }
+    
+    .chart-label {
+        width: 120px;
+        font-weight: 500;
+        color: var(--primary-dark);
+        font-size: 0.9rem;
+    }
+    
+    .chart-bar {
+        flex: 1;
+        height: 20px;
+        background: var(--neutral-gray);
+        border-radius: 10px;
+        margin: 0 1rem;
+        overflow: hidden;
+    }
+    
+    .chart-fill {
+        height: 100%;
+        background: linear-gradient(90deg, var(--primary-light) 0%, var(--primary-dark) 100%);
+        border-radius: 10px;
+        transition: width 0.3s ease;
+    }
+    
+    .chart-value {
+        width: 40px;
+        text-align: right;
+        font-weight: bold;
+        color: var(--primary-dark);
+    }
+    
+    .trends-section {
+        margin-bottom: 2rem;
+    }
+    
+    .trend-card {
+        background: var(--neutral-light);
+        border-radius: 15px;
+        padding: 1.5rem;
+        box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+        margin-bottom: 1rem;
+    }
+    
+    .trend-card h3 {
+        color: var(--primary-dark);
+        margin-bottom: 1rem;
+        font-size: 1.3rem;
+    }
+    
+    .trend-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid var(--neutral-gray);
+    }
+    
+    .trend-item:last-child {
+        border-bottom: none;
+    }
+    
+    .trend-label {
+        font-weight: 500;
+        color: var(--primary-dark);
+    }
+    
+    .trend-value {
+        font-weight: bold;
+        color: var(--accent-green);
+        font-size: 1.1rem;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<script>
+// Animate chart bars on page load
+document.addEventListener('DOMContentLoaded', function() {
+    const chartFills = document.querySelectorAll('.chart-fill');
+    chartFills.forEach(function(fill) {
+        const width = fill.style.width;
+        fill.style.width = '0%';
+        setTimeout(function() {
+            fill.style.width = width;
+        }, 100);
+    });
+});
+</script>
+{% endblock %}

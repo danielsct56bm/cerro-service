@@ -1,0 +1,33 @@
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: snow_redis
+    ports:
+      - "6379:6379"         # dev: expuesto
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    networks: [snow_network]
+
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: snow_sqlserver
+    ports:
+      - "1433:1433"         # dev: expuesto
+    environment:
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=Freeport@2025
+      - MSSQL_PID=Developer
+    volumes:
+      - sqlserver_data:/var/opt/mssql
+    restart: unless-stopped
+    networks: [snow_network]
+
+volumes:
+  redis_data:
+  sqlserver_data:
+
+networks:
+  snow_network:
+    driver: bridge

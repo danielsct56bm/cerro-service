@@ -1,0 +1,395 @@
+{% extends 'CPdashadmin/base_admin.html' %}
+
+{% block admin_title %}Crear Ticket{% endblock %}
+
+{% block content_title %}Crear Nuevo Ticket{% endblock %}
+{% block content_subtitle %}Generar una nueva orden de ticket{% endblock %}
+
+{% block admin_content %}
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-plus-circle me-2"></i>
+                    Formulario de Ticket
+                </h5>
+            </div>
+            <div class="card-body">
+                <form id="createTicketForm">
+                    {% csrf_token %}
+                    <!-- Categoría -->
+                    <div class="mb-3">
+                        <label for="categorySelect" class="form-label">Categoría *</label>
+                        <select class="form-select" id="categorySelect" required>
+                            <option value="">Seleccionar categoría</option>
+                            {% for category in categories %}
+                                <option value="{{ category.id }}">{{ category.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Subcategoría -->
+                    <div class="mb-3">
+                        <label for="subcategorySelect" class="form-label">Subcategoría</label>
+                        <select class="form-select" id="subcategorySelect">
+                            <option value="">Seleccionar subcategoría</option>
+                        </select>
+                    </div>
+
+                    <!-- Prioridad -->
+                    <div class="mb-3">
+                        <label for="prioritySelect" class="form-label">Prioridad</label>
+                        <select class="form-select" id="prioritySelect">
+                            <option value="normal">Normal</option>
+                            <option value="low">Baja</option>
+                            <option value="high">Alta</option>
+                            <option value="urgent">Urgente</option>
+                        </select>
+                    </div>
+
+                    <!-- Campos dinámicos del formulario -->
+                    <div id="dynamicFields" class="mb-3">
+                        <!-- Los campos se cargarán dinámicamente aquí -->
+                    </div>
+
+                    <!-- Botones -->
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'CPdashadmin:ticket_management' %}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>Cancelar
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>Crear Ticket
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Información
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <h6><i class="fas fa-lightbulb me-2"></i>Consejos:</h6>
+                    <ul class="mb-0">
+                        <li>Selecciona la categoría que mejor describa tu solicitud</li>
+                        <li>La subcategoría te ayudará a especificar mejor el tipo de servicio</li>
+                        <li>Completa todos los campos requeridos (*)</li>
+                        <li>La prioridad determina la urgencia de tu solicitud</li>
+                    </ul>
+                </div>
+                
+                <div class="alert alert-warning">
+                    <h6><i class="fas fa-exclamation-triangle me-2"></i>Nota:</h6>
+                    <p class="mb-0">Una vez creado el ticket, se generará automáticamente un código único y se asignará a un técnico disponible.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de confirmación -->
+<div class="modal fade" id="successModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-check-circle text-success me-2"></i>
+                    Ticket Creado
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>El ticket ha sido creado exitosamente.</p>
+                <div id="ticketInfo">
+                    <!-- Información del ticket creado -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                <a href="{% url 'CPdashadmin:ticket_management' %}" class="btn btn-primary">Ver Tickets</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+{{ block.super }}
+<style>
+    .card {
+        border-radius: 10px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .card-header {
+        background: var(--primary-light);
+        color: var(--neutral-light);
+        border-radius: 10px 10px 0 0 !important;
+    }
+    
+    .form-label {
+        font-weight: 600;
+        color: var(--primary-dark);
+    }
+    
+    .form-select, .form-control {
+        border-radius: 8px;
+        border: 2px solid var(--neutral-gray);
+        transition: border-color 0.3s ease;
+    }
+    
+    .form-select:focus, .form-control:focus {
+        border-color: var(--primary-dark);
+        box-shadow: 0 0 0 0.2rem rgba(var(--primary-dark-rgb), 0.25);
+    }
+    
+    .btn {
+        border-radius: 8px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    
+    .btn:hover {
+        transform: translateY(-1px);
+    }
+    
+    .alert {
+        border-radius: 8px;
+        border: none;
+    }
+    
+    .dynamic-field {
+        margin-bottom: 1rem;
+        padding: 1rem;
+        background: var(--neutral-light);
+        border-radius: 8px;
+        border-left: 4px solid var(--primary-dark);
+    }
+    
+    .field-required {
+        color: var(--danger);
+        font-weight: bold;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<script>
+let currentTemplate = null;
+
+// Cargar subcategorías cuando se selecciona una categoría
+document.getElementById('categorySelect').addEventListener('change', function() {
+    const categoryId = this.value;
+    const subcategorySelect = document.getElementById('subcategorySelect');
+    const dynamicFields = document.getElementById('dynamicFields');
+    
+    // Limpiar subcategorías y campos dinámicos
+    subcategorySelect.innerHTML = '<option value="">Seleccionar subcategoría</option>';
+    dynamicFields.innerHTML = '';
+    currentTemplate = null;
+    
+    if (categoryId) {
+        // Cargar subcategorías
+        fetch(`/admin-dashboard/tickets/get-subcategories/${categoryId}/`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    data.subcategories.forEach(subcategory => {
+                        const option = document.createElement('option');
+                        option.value = subcategory.id;
+                        option.textContent = subcategory.name;
+                        subcategorySelect.appendChild(option);
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Error al cargar subcategorías:', error);
+            });
+    }
+});
+
+// Cargar campos dinámicos cuando se selecciona una subcategoría
+document.getElementById('subcategorySelect').addEventListener('change', function() {
+    const subcategoryId = this.value;
+    const dynamicFields = document.getElementById('dynamicFields');
+    
+    // Limpiar campos dinámicos
+    dynamicFields.innerHTML = '';
+    currentTemplate = null;
+    
+    if (subcategoryId) {
+        // Obtener la subcategoría seleccionada
+        const categoryId = document.getElementById('categorySelect').value;
+        fetch(`/admin-dashboard/tickets/get-subcategories/${categoryId}/`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const subcategory = data.subcategories.find(s => s.id == subcategoryId);
+                    if (subcategory && subcategory.template) {
+                        currentTemplate = subcategory.template;
+                        renderDynamicFields(subcategory.template.fields);
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error al cargar campos dinámicos:', error);
+            });
+    }
+});
+
+// Renderizar campos dinámicos
+function renderDynamicFields(fields) {
+    const dynamicFields = document.getElementById('dynamicFields');
+    
+    fields.forEach(field => {
+        const fieldDiv = document.createElement('div');
+        fieldDiv.className = 'dynamic-field';
+        
+        const label = document.createElement('label');
+        label.className = 'form-label';
+        label.htmlFor = `field_${field.id}`;
+        label.innerHTML = field.label;
+        if (field.required) {
+            label.innerHTML += ' <span class="field-required">*</span>';
+        }
+        
+        const input = createFieldInput(field);
+        
+        fieldDiv.appendChild(label);
+        fieldDiv.appendChild(input);
+        dynamicFields.appendChild(fieldDiv);
+    });
+}
+
+// Crear input según el tipo de campo
+function createFieldInput(field) {
+    let input;
+    
+    switch (field.field_type) {
+        case 'select':
+            input = document.createElement('select');
+            input.className = 'form-select';
+            input.id = `field_${field.id}`;
+            if (field.required) input.required = true;
+            
+            // Agregar opción por defecto
+            const defaultOption = document.createElement('option');
+            defaultOption.value = '';
+            defaultOption.textContent = 'Seleccionar...';
+            input.appendChild(defaultOption);
+            
+            // Agregar opciones si existen
+            if (field.options) {
+                try {
+                    const options = JSON.parse(field.options);
+                    if (Array.isArray(options)) {
+                        options.forEach(option => {
+                            const optionElement = document.createElement('option');
+                            optionElement.value = option;
+                            optionElement.textContent = option;
+                            input.appendChild(optionElement);
+                        });
+                    }
+                } catch (e) {
+                    console.error('Error al parsear opciones:', e);
+                }
+            }
+            break;
+            
+        case 'textarea':
+            input = document.createElement('textarea');
+            input.className = 'form-control';
+            input.rows = 3;
+            break;
+            
+        case 'date':
+            input = document.createElement('input');
+            input.type = 'date';
+            input.className = 'form-control';
+            break;
+            
+        case 'number':
+            input = document.createElement('input');
+            input.type = 'number';
+            input.className = 'form-control';
+            break;
+            
+        default:
+            input = document.createElement('input');
+            input.type = 'text';
+            input.className = 'form-control';
+    }
+    
+    input.id = `field_${field.id}`;
+    input.name = field.name;
+    if (field.required) input.required = true;
+    
+    return input;
+}
+
+// Manejar envío del formulario
+document.getElementById('createTicketForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = {
+        category_id: document.getElementById('categorySelect').value,
+        subcategory_id: document.getElementById('subcategorySelect').value,
+        priority: document.getElementById('prioritySelect').value,
+        form_data: {}
+    };
+    
+    // Recolectar datos de campos dinámicos
+    if (currentTemplate) {
+        currentTemplate.fields.forEach(field => {
+            const input = document.getElementById(`field_${field.id}`);
+            if (input) {
+                formData.form_data[field.name] = input.value;
+            }
+        });
+    }
+    
+    // Enviar datos
+    fetch('{% url "CPdashadmin:create_ticket" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        },
+        body: JSON.stringify(formData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Mostrar modal de éxito
+            const ticketInfo = document.getElementById('ticketInfo');
+            ticketInfo.innerHTML = `
+                <div class="alert alert-success">
+                    <strong>Código:</strong> ${data.ticket.code}<br>
+                    <strong>Estado:</strong> ${data.ticket.status}<br>
+                    <strong>Prioridad:</strong> ${data.ticket.priority}<br>
+                    <strong>Fecha:</strong> ${new Date(data.ticket.created_at).toLocaleString()}
+                </div>
+            `;
+            
+            const successModal = new bootstrap.Modal(document.getElementById('successModal'));
+            successModal.show();
+        } else {
+            alert('Error: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error al crear el ticket');
+    });
+});
+</script>
+{% endblock %}

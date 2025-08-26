@@ -1,0 +1,647 @@
+{% extends 'CPdashadmin/base_admin.html' %}
+
+{% block admin_title %}Gestión de Categorías de Tickets{% endblock %}
+
+{% block content_title %}Gestión de Categorías de Tickets{% endblock %}
+{% block content_subtitle %}Administrar categorías, subcategorías y plantillas{% endblock %}
+
+{% block admin_content %}
+<!-- Stats Cards -->
+<div class="stats-row mb-4">
+    <div class="row">
+        <div class="col-md-3">
+            <div class="stat-card-small">
+                <div class="stat-icon-small">
+                    <i class="bi bi-folder"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-number">{{ total_categories }}</div>
+                    <div class="stat-label">Total Categorías</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card-small">
+                <div class="stat-icon-small">
+                    <i class="bi bi-check-circle"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-number">{{ active_categories }}</div>
+                    <div class="stat-label">Categorías Activas</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card-small">
+                <div class="stat-icon-small">
+                    <i class="bi bi-tags"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-number">{{ total_subcategories }}</div>
+                    <div class="stat-label">Subcategorías</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card-small">
+                <div class="stat-icon-small">
+                    <i class="bi bi-file-earmark-text"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-number">{{ total_templates }}</div>
+                    <div class="stat-label">Plantillas</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Action Buttons -->
+<div class="action-buttons mb-4">
+    <div class="row">
+        <div class="col-md-3">
+            <a href="{% url 'CPdashadmin:create_ticket_category' %}" class="btn btn-primary w-100 action-btn">
+                <i class="bi bi-plus-circle me-2"></i>Nueva Categoría
+            </a>
+        </div>
+        <div class="col-md-3">
+            <a href="{% url 'CPdashadmin:create_ticket_subcategory' %}" class="btn btn-success w-100 action-btn">
+                <i class="bi bi-plus-circle me-2"></i>Nueva Subcategoría
+            </a>
+        </div>
+        <div class="col-md-3">
+            <a href="{% url 'CPdashadmin:create_ticket_template' %}" class="btn btn-info w-100 action-btn">
+                <i class="bi bi-plus-circle me-2"></i>Nueva Plantilla
+            </a>
+        </div>
+        <div class="col-md-3">
+            <a href="{% url 'CPdashadmin:ticket_management' %}" class="btn btn-secondary w-100 action-btn">
+                <i class="bi bi-ticket-detailed me-2"></i>Ver Tickets
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Search and Filters -->
+<div class="filters-section mb-4">
+    <div class="row">
+        <div class="col-md-6">
+            <div class="input-group">
+                <span class="input-group-text">
+                    <i class="bi bi-search"></i>
+                </span>
+                <input type="text" class="form-control" id="searchCategories" placeholder="Buscar categorías..." value="{{ search }}">
+                <button class="btn btn-primary" type="button" onclick="searchCategories()">
+                    <i class="bi bi-search"></i>
+                </button>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="d-flex justify-content-end">
+                <button class="btn btn-outline-primary me-2" onclick="exportCategories()" title="Exportar categorías">
+                    <i class="bi bi-download me-2"></i>Exportar
+                </button>
+                <button class="btn btn-outline-success" onclick="importCategories()" title="Importar categorías">
+                    <i class="bi bi-upload me-2"></i>Importar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Categories Table -->
+<div class="table-responsive">
+    <table class="table table-hover">
+        <thead class="table-dark">
+            <tr>
+                <th><i class="bi bi-folder me-2"></i>Nombre</th>
+                <th><i class="bi bi-text-paragraph me-2"></i>Descripción</th>
+                <th><i class="bi bi-tags me-2"></i>Subcategorías</th>
+                <th><i class="bi bi-file-earmark-text me-2"></i>Plantillas</th>
+                <th><i class="bi bi-toggle-on me-2"></i>Estado</th>
+                <th><i class="bi bi-calendar me-2"></i>Fecha Creación</th>
+                <th><i class="bi bi-gear me-2"></i>Acciones</th>
+            </tr>
+        </thead>
+        <tbody id="categoriesTableBody">
+            {% for category in categories %}
+            <tr>
+                <td>
+                    <div class="category-info">
+                        <i class="bi bi-{{ category.icon }}" style="color: {{ category.color }};"></i>
+                        <strong>{{ category.name }}</strong>
+                    </div>
+                </td>
+                <td>
+                    <span class="text-muted">{{ category.description|default:"Sin descripción"|truncatechars:50 }}</span>
+                </td>
+                <td>
+                    <span class="badge bg-info">{{ category.subcategories.count }}</span>
+                    {% if category.subcategories.count > 0 %}
+                        <small class="text-muted d-block">
+                            {% for subcategory in category.subcategories.all|slice:":3" %}
+                                {{ subcategory.name }}{% if not forloop.last %}, {% endif %}
+                            {% endfor %}
+                            {% if category.subcategories.count > 3 %}
+                                +{{ category.subcategories.count|add:"-3" }} más
+                            {% endif %}
+                        </small>
+                    {% endif %}
+                </td>
+                <td>
+                    <span class="badge bg-warning">{{ category.ticket_templates.count }}</span>
+                </td>
+                <td>
+                    {% if category.is_active %}
+                        <span class="badge bg-success">
+                            <i class="bi bi-check-circle me-1"></i>Activa
+                        </span>
+                    {% else %}
+                        <span class="badge bg-secondary">
+                            <i class="bi bi-x-circle me-1"></i>Inactiva
+                        </span>
+                    {% endif %}
+                </td>
+                <td>{{ category.created_at|date:"d/m/Y H:i" }}</td>
+                <td>
+                    <div class="btn-group" role="group">
+                        <button class="btn btn-sm btn-outline-primary" onclick="viewCategory({{ category.id }})" title="Ver detalles">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-warning" onclick="editCategory({{ category.id }})" title="Editar">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-success" onclick="addSubcategory({{ category.id }})" title="Agregar subcategoría">
+                            <i class="bi bi-plus"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-info" onclick="manageTemplates({{ category.id }})" title="Gestionar plantillas">
+                            <i class="bi bi-file-earmark-text"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger" onclick="deleteCategory({{ category.id }}, '{{ category.name }}')" title="Eliminar">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="7" class="text-center text-muted py-5">
+                    <div class="empty-state">
+                        <i class="bi bi-folder-x display-1 text-muted mb-3"></i>
+                        <h5 class="text-muted">No hay categorías registradas</h5>
+                        <p class="text-muted mb-3">Comienza creando tu primera categoría de tickets</p>
+                        <a href="{% url 'CPdashadmin:create_ticket_category' %}" class="btn btn-primary">
+                            <i class="bi bi-plus-circle me-2"></i>Crear primera categoría
+                        </a>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Pagination -->
+{% if categories.has_other_pages %}
+<nav aria-label="Paginación de categorías">
+    <ul class="pagination justify-content-center">
+        {% if categories.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ categories.previous_page_number }}{% if search %}&search={{ search }}{% endif %}">
+                    <i class="bi bi-chevron-left"></i> Anterior
+                </a>
+            </li>
+        {% endif %}
+        
+        {% for num in categories.paginator.page_range %}
+            {% if categories.number == num %}
+                <li class="page-item active">
+                    <span class="page-link">{{ num }}</span>
+                </li>
+            {% elif num > categories.number|add:'-3' and num < categories.number|add:'3' %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ num }}{% if search %}&search={{ search }}{% endif %}">{{ num }}</a>
+                </li>
+            {% endif %}
+        {% endfor %}
+        
+        {% if categories.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ categories.next_page_number }}{% if search %}&search={{ search }}{% endif %}">
+                    Siguiente <i class="bi bi-chevron-right"></i>
+                </a>
+            </li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}
+
+<!-- Quick Actions Modal -->
+<div class="modal fade" id="quickActionsModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-lightning me-2"></i>Acciones Rápidas
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <a href="{% url 'CPdashadmin:create_ticket_category' %}" class="btn btn-primary w-100">
+                            <i class="bi bi-folder-plus me-2"></i>Nueva Categoría
+                        </a>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <a href="{% url 'CPdashadmin:create_ticket_subcategory' %}" class="btn btn-success w-100">
+                            <i class="bi bi-tag-plus me-2"></i>Nueva Subcategoría
+                        </a>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <a href="{% url 'CPdashadmin:create_ticket_template' %}" class="btn btn-info w-100">
+                            <i class="bi bi-file-earmark-plus me-2"></i>Nueva Plantilla
+                        </a>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <a href="{% url 'CPdashadmin:ticket_management' %}" class="btn btn-secondary w-100">
+                            <i class="bi bi-ticket-detailed me-2"></i>Ver Tickets
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-exclamation-triangle text-danger me-2"></i>
+                    Confirmar Eliminación
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>¿Estás seguro de que quieres eliminar la categoría <strong id="deleteCategoryName"></strong>?</p>
+                <div class="alert alert-warning">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    <strong>Advertencia:</strong> Esta acción no se puede deshacer.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-danger" id="confirmDelete">
+                    <i class="bi bi-trash me-2"></i>Eliminar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+{{ block.super }}
+<style>
+    .stats-row {
+        margin-bottom: 2rem;
+    }
+    
+    .stat-card-small {
+        background: var(--neutral-light);
+        border-radius: 15px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        display: flex;
+        align-items: center;
+        transition: all 0.3s ease;
+        border: 1px solid rgba(0,0,0,0.05);
+    }
+    
+    .stat-card-small:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    }
+    
+    .stat-icon-small {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--primary-light) 0%, var(--primary-dark) 100%);
+        color: var(--neutral-light);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 1rem;
+        font-size: 1.5rem;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    }
+    
+    .stat-content {
+        flex: 1;
+    }
+    
+    .stat-number {
+        font-size: 2rem;
+        font-weight: bold;
+        color: var(--primary-dark);
+        margin-bottom: 0.25rem;
+        line-height: 1;
+    }
+    
+    .stat-label {
+        font-size: 0.85rem;
+        color: var(--neutral-gray);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-weight: 600;
+    }
+    
+    .action-buttons {
+        background: var(--neutral-light);
+        border-radius: 15px;
+        padding: 2rem;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        border: 1px solid rgba(0,0,0,0.05);
+    }
+    
+    .action-btn {
+        border-radius: 10px;
+        padding: 0.75rem 1rem;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        border: none;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .action-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    }
+    
+    .filters-section {
+        background: var(--neutral-light);
+        border-radius: 15px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        border: 1px solid rgba(0,0,0,0.05);
+    }
+    
+    .input-group-text {
+        background: var(--primary-light);
+        color: var(--neutral-light);
+        border: none;
+        border-radius: 8px 0 0 8px;
+    }
+    
+    .table {
+        background: var(--neutral-light);
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        border: 1px solid rgba(0,0,0,0.05);
+    }
+    
+    .table thead th {
+        border: none;
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.8rem;
+        letter-spacing: 0.5px;
+        background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-light) 100%);
+        color: var(--neutral-light);
+        padding: 1rem;
+    }
+    
+    .table tbody tr {
+        transition: all 0.3s ease;
+        border-bottom: 1px solid rgba(0,0,0,0.05);
+    }
+    
+    .table tbody tr:hover {
+        background-color: rgba(var(--primary-light-rgb), 0.08);
+        transform: scale(1.01);
+    }
+    
+    .table tbody td {
+        padding: 1rem;
+        vertical-align: middle;
+    }
+    
+    .category-info {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    
+    .category-info i {
+        font-size: 1.2rem;
+    }
+    
+    .badge {
+        font-size: 0.75rem;
+        padding: 0.5rem 0.75rem;
+        border-radius: 8px;
+        font-weight: 600;
+    }
+    
+    .btn-group .btn {
+        border-radius: 6px !important;
+        margin: 0 2px;
+        padding: 0.5rem 0.75rem;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-group .btn:hover {
+        transform: translateY(-1px);
+    }
+    
+    .pagination .page-link {
+        color: var(--primary-dark);
+        border-color: var(--neutral-gray);
+        border-radius: 8px;
+        margin: 0 2px;
+        transition: all 0.3s ease;
+    }
+    
+    .pagination .page-link:hover {
+        background-color: var(--primary-light);
+        border-color: var(--primary-light);
+        color: var(--neutral-light);
+    }
+    
+    .pagination .page-item.active .page-link {
+        background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-light) 100%);
+        border-color: var(--primary-dark);
+        color: var(--neutral-light);
+    }
+    
+    .empty-state {
+        padding: 3rem 1rem;
+    }
+    
+    .empty-state .display-1 {
+        font-size: 4rem;
+        opacity: 0.5;
+    }
+    
+    /* Responsive improvements */
+    @media (max-width: 768px) {
+        .stat-card-small {
+            margin-bottom: 1rem;
+        }
+        
+        .action-buttons .row > div {
+            margin-bottom: 1rem;
+        }
+        
+        .btn-group {
+            flex-direction: column;
+        }
+        
+        .btn-group .btn {
+            margin: 1px 0;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<script>
+let currentDeleteCategoryId = null;
+
+function searchCategories() {
+    const searchTerm = document.getElementById('searchCategories').value;
+    
+    // Construir URL con parámetros
+    let url = '{% url "CPdashadmin:ticket_categories_management" %}?';
+    if (searchTerm) url += `search=${encodeURIComponent(searchTerm)}&`;
+    
+    window.location.href = url;
+}
+
+function viewCategory(categoryId) {
+    // Redirigir a la vista de detalles de la categoría
+    window.location.href = `{% url 'CPdashadmin:ticket_categories_management' %}${categoryId}/`;
+}
+
+function editCategory(categoryId) {
+    // Redirigir a la edición de la categoría
+    window.location.href = `{% url 'CPdashadmin:ticket_categories_management' %}${categoryId}/edit/`;
+}
+
+function addSubcategory(categoryId) {
+    // Redirigir a crear subcategoría con categoría preseleccionada
+    window.location.href = `{% url 'CPdashadmin:create_ticket_subcategory' %}?category_id=${categoryId}`;
+}
+
+function manageTemplates(categoryId) {
+    // Redirigir a gestionar plantillas de la categoría
+    window.location.href = `{% url 'CPdashadmin:ticket_categories_management' %}${categoryId}/templates/`;
+}
+
+function deleteCategory(categoryId, categoryName) {
+    // Mostrar modal de confirmación
+    currentDeleteCategoryId = categoryId;
+    document.getElementById('deleteCategoryName').textContent = categoryName;
+    
+    const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+    deleteModal.show();
+}
+
+// Confirmar eliminación
+document.getElementById('confirmDelete').addEventListener('click', function() {
+    if (currentDeleteCategoryId) {
+        // Realizar petición de eliminación
+        fetch(`{% url 'CPdashadmin:ticket_categories_management' %}${currentDeleteCategoryId}/delete/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showNotification(data.message, 'success');
+                // Cerrar modal y recargar página
+                const deleteModal = bootstrap.Modal.getInstance(document.getElementById('deleteModal'));
+                deleteModal.hide();
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1500);
+            } else {
+                showNotification('Error: ' + data.message, 'danger');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification('Error al eliminar la categoría', 'danger');
+        });
+    }
+});
+
+function exportCategories() {
+    // Implementar exportación de categorías
+    showNotification('Función de exportación en desarrollo', 'info');
+}
+
+function importCategories() {
+    // Implementar importación de categorías
+    showNotification('Función de importación en desarrollo', 'info');
+}
+
+function showNotification(message, type = 'info') {
+    // Crear notificación personalizada
+    const notification = document.createElement('div');
+    notification.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+    notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    notification.innerHTML = `
+        <i class="bi bi-${type === 'info' ? 'info-circle' : type === 'warning' ? 'exclamation-triangle' : type === 'danger' ? 'x-circle' : 'check-circle'} me-2"></i>
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // Auto-remover después de 5 segundos
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.remove();
+        }
+    }, 5000);
+}
+
+// Búsqueda en tiempo real
+document.getElementById('searchCategories').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        searchCategories();
+    }
+});
+
+// Mejorar experiencia de usuario con tooltips
+document.addEventListener('DOMContentLoaded', function() {
+    // Inicializar tooltips de Bootstrap
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[title]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+    
+    // Agregar efectos de hover a las tarjetas de estadísticas
+    const statCards = document.querySelectorAll('.stat-card-small');
+    statCards.forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-3px) scale(1.02)';
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0) scale(1)';
+        });
+    });
+});
+</script>
+{% endblock %}

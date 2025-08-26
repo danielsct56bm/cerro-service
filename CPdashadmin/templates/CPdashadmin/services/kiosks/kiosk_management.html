@@ -1,0 +1,514 @@
+{% extends 'CPdashadmin/base_admin.html' %}
+
+{% block admin_title %}Gestión de Kiosks{% endblock %}
+
+{% block content_title %}Gestión de Kiosks{% endblock %}
+{% block content_subtitle %}Administrar kiosks del sistema{% endblock %}
+
+{% block admin_content %}
+<!-- Stats Cards -->
+<div class="stats-row mb-4">
+    <div class="row">
+        <div class="col-md-3">
+            <div class="stat-card-small">
+                <div class="stat-icon-small">
+                    <i class="fas fa-desktop"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-number">{{ total_kiosks }}</div>
+                    <div class="stat-label">Total Kiosks</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card-small">
+                <div class="stat-icon-small">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-number">{{ active_kiosks }}</div>
+                    <div class="stat-label">Activos</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card-small">
+                <div class="stat-icon-small">
+                    <i class="fas fa-times-circle"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-number">{{ inactive_kiosks }}</div>
+                    <div class="stat-label">Inactivos</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card-small">
+                <div class="stat-icon-small">
+                    <i class="fas fa-heartbeat"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-number">{{ online_kiosks }}</div>
+                    <div class="stat-label">En Línea</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filters Section -->
+<div class="filters-section mb-4">
+    <div class="row">
+        <div class="col-md-4">
+            <div class="input-group">
+                <input type="text" class="form-control" id="searchKiosks" placeholder="Buscar kiosks...">
+                <button class="btn btn-primary" type="button" onclick="searchKiosks()">
+                    <i class="fas fa-search"></i>
+                </button>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <select class="form-select" id="statusFilter">
+                <option value="">Todos los estados</option>
+                <option value="active">Activo</option>
+                <option value="inactive">Inactivo</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <select class="form-select" id="typeFilter">
+                <option value="">Todos los tipos</option>
+                <option value="ticket">Ticket</option>
+                <option value="information">Información</option>
+                <option value="registration">Registro</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <button class="btn btn-success w-100" onclick="showCreateKioskModal()">
+                <i class="fas fa-plus"></i> Nuevo
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Kiosks Grid -->
+<div class="kiosks-grid">
+    {% for kiosk in kiosks %}
+    <div class="kiosk-card">
+        <div class="kiosk-header">
+            <div class="kiosk-status">
+                {% if kiosk.is_active %}
+                    <span class="status-indicator active"></span>
+                {% else %}
+                    <span class="status-indicator inactive"></span>
+                {% endif %}
+            </div>
+            <div class="kiosk-actions">
+                <button class="btn btn-sm btn-outline-primary" onclick="viewKiosk('{{ kiosk.id }}')">
+                    <i class="fas fa-eye"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-warning" onclick="editKiosk('{{ kiosk.id }}')">
+                    <i class="fas fa-edit"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-danger" onclick="deleteKiosk('{{ kiosk.id }}')">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+        </div>
+        
+        <div class="kiosk-body">
+            <div class="kiosk-icon">
+                <i class="fas fa-desktop"></i>
+            </div>
+            <h5 class="kiosk-name">{{ kiosk.name }}</h5>
+            <p class="kiosk-id">ID: {{ kiosk.id }}</p>
+            
+            <div class="kiosk-info">
+                <div class="info-item">
+                    <span class="info-label">Tipo:</span>
+                    <span class="info-value">{{ kiosk.get_device_type_display }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">MAC:</span>
+                    <span class="info-value">{{ kiosk.mac_address|default:"-" }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Estado:</span>
+                    {% if kiosk.is_active %}
+                        <span class="badge bg-success">Activo</span>
+                    {% else %}
+                        <span class="badge bg-danger">Inactivo</span>
+                    {% endif %}
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Último Heartbeat:</span>
+                    <span class="info-value">
+                        {% if kiosk.last_heartbeat %}
+                            {{ kiosk.last_heartbeat|date:"d/m/Y H:i" }}
+                        {% else %}
+                            <span class="text-muted">Nunca</span>
+                        {% endif %}
+                    </span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="kiosk-footer">
+            <div class="kiosk-connection">
+                {% if kiosk.last_heartbeat %}
+                    {% if kiosk.is_online %}
+                        <span class="connection-status online">
+                            <i class="fas fa-wifi"></i> En línea
+                        </span>
+                    {% else %}
+                        <span class="connection-status offline">
+                            <i class="fas fa-wifi"></i> Desconectado
+                        </span>
+                    {% endif %}
+                {% else %}
+                    <span class="connection-status unknown">
+                        <i class="fas fa-question"></i> Desconocido
+                    </span>
+                {% endif %}
+            </div>
+            <div class="kiosk-location">
+                <i class="fas fa-map-marker-alt"></i>
+                {{ kiosk.company.name }}
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="empty-state">
+        <i class="fas fa-desktop fa-3x mb-3"></i>
+        <h4>No hay kiosks registrados</h4>
+        <p class="text-muted">Comience agregando su primer kiosk al sistema</p>
+        <button class="btn btn-primary" onclick="showCreateKioskModal()">
+            <i class="fas fa-plus"></i> Agregar Kiosk
+        </button>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Pagination -->
+{% if kiosks.has_other_pages %}
+<nav aria-label="Paginación de kiosks" class="mt-4">
+    <ul class="pagination justify-content-center">
+        {% if kiosks.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ kiosks.previous_page_number }}">Anterior</a>
+            </li>
+        {% endif %}
+        
+        {% for num in kiosks.paginator.page_range %}
+            {% if kiosks.number == num %}
+                <li class="page-item active">
+                    <span class="page-link">{{ num }}</span>
+                </li>
+            {% elif num > kiosks.number|add:'-3' and num < kiosks.number|add:'3' %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                </li>
+            {% endif %}
+        {% endfor %}
+        
+        {% if kiosks.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ kiosks.next_page_number }}">Siguiente</a>
+            </li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}
+{% endblock %}
+
+{% block extra_css %}
+{{ block.super }}
+<style>
+    .stats-row {
+        margin-bottom: 2rem;
+    }
+    
+    .stat-card-small {
+        background: var(--neutral-light);
+        border-radius: 10px;
+        padding: 1rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        display: flex;
+        align-items: center;
+        transition: transform 0.3s ease;
+    }
+    
+    .stat-card-small:hover {
+        transform: translateY(-2px);
+    }
+    
+    .stat-icon-small {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background: var(--primary-light);
+        color: var(--neutral-light);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 1rem;
+        font-size: 1.2rem;
+    }
+    
+    .stat-content {
+        flex: 1;
+    }
+    
+    .stat-number {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: var(--primary-dark);
+        margin-bottom: 0.25rem;
+    }
+    
+    .stat-label {
+        font-size: 0.8rem;
+        color: var(--neutral-gray);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .filters-section {
+        background: var(--neutral-light);
+        border-radius: 10px;
+        padding: 1.5rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .kiosks-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .kiosk-card {
+        background: var(--neutral-light);
+        border-radius: 15px;
+        box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+        overflow: hidden;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    
+    .kiosk-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+    }
+    
+    .kiosk-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem;
+        background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-light) 100%);
+        color: var(--neutral-light);
+    }
+    
+    .kiosk-status {
+        display: flex;
+        align-items: center;
+    }
+    
+    .status-indicator {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        margin-right: 0.5rem;
+    }
+    
+    .status-indicator.active {
+        background: var(--accent-green);
+        box-shadow: 0 0 10px rgba(76, 175, 80, 0.5);
+    }
+    
+    .status-indicator.inactive {
+        background: #dc3545;
+        box-shadow: 0 0 10px rgba(220, 53, 69, 0.5);
+    }
+    
+    .kiosk-actions {
+        display: flex;
+        gap: 0.25rem;
+    }
+    
+    .kiosk-actions .btn {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.8rem;
+    }
+    
+    .kiosk-body {
+        padding: 1.5rem;
+        text-align: center;
+    }
+    
+    .kiosk-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: var(--primary-light);
+        color: var(--neutral-light);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1rem;
+        font-size: 1.5rem;
+    }
+    
+    .kiosk-name {
+        color: var(--primary-dark);
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+    
+    .kiosk-id {
+        color: var(--neutral-gray);
+        font-size: 0.9rem;
+        margin-bottom: 1rem;
+    }
+    
+    .kiosk-info {
+        text-align: left;
+    }
+    
+    .info-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.5rem 0;
+        border-bottom: 1px solid var(--neutral-gray);
+    }
+    
+    .info-item:last-child {
+        border-bottom: none;
+    }
+    
+    .info-label {
+        font-weight: 600;
+        color: var(--primary-dark);
+        font-size: 0.9rem;
+    }
+    
+    .info-value {
+        color: var(--neutral-gray);
+        font-size: 0.9rem;
+    }
+    
+    .kiosk-footer {
+        padding: 1rem;
+        background: var(--neutral-gray);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .connection-status {
+        display: flex;
+        align-items: center;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+    
+    .connection-status.online {
+        color: var(--accent-green);
+    }
+    
+    .connection-status.offline {
+        color: #dc3545;
+    }
+    
+    .connection-status.unknown {
+        color: var(--neutral-gray);
+    }
+    
+    .kiosk-location {
+        color: var(--neutral-gray);
+        font-size: 0.8rem;
+    }
+    
+    .empty-state {
+        grid-column: 1 / -1;
+        text-align: center;
+        padding: 3rem;
+        color: var(--neutral-gray);
+    }
+    
+    .badge {
+        font-size: 0.7rem;
+        padding: 0.4rem 0.6rem;
+    }
+    
+    .pagination .page-link {
+        color: var(--primary-dark);
+        border-color: var(--neutral-gray);
+    }
+    
+    .pagination .page-item.active .page-link {
+        background-color: var(--primary-dark);
+        border-color: var(--primary-dark);
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<script>
+function searchKiosks() {
+    const searchTerm = document.getElementById('searchKiosks').value;
+    const statusFilter = document.getElementById('statusFilter').value;
+    const typeFilter = document.getElementById('typeFilter').value;
+    
+    // Construir URL con parámetros
+    let url = '{% url "CPdashadmin:kiosk_management" %}?';
+    if (searchTerm) url += `search=${encodeURIComponent(searchTerm)}&`;
+    if (statusFilter) url += `status=${encodeURIComponent(statusFilter)}&`;
+    if (typeFilter) url += `type=${encodeURIComponent(typeFilter)}&`;
+    
+    window.location.href = url;
+}
+
+function viewKiosk(kioskId) {
+    // Implementar vista de kiosk
+    console.log('Viendo kiosk ID:', kioskId);
+    alert('Función de vista en desarrollo');
+}
+
+function editKiosk(kioskId) {
+    // Implementar edición de kiosk
+    console.log('Editando kiosk ID:', kioskId);
+    alert('Función de edición en desarrollo');
+}
+
+function deleteKiosk(kioskId) {
+    if (confirm('¿Está seguro de que desea eliminar este kiosk?')) {
+        // Implementar eliminación de kiosk
+        console.log('Eliminando kiosk ID:', kioskId);
+        alert('Función de eliminación en desarrollo');
+    }
+}
+
+function showCreateKioskModal() {
+    // Implementar modal de creación de kiosk
+    alert('Función de creación en desarrollo');
+}
+
+// Búsqueda en tiempo real
+document.getElementById('searchKiosks').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        searchKiosks();
+    }
+});
+
+// Filtros automáticos
+document.getElementById('statusFilter').addEventListener('change', function() {
+    searchKiosks();
+});
+
+document.getElementById('typeFilter').addEventListener('change', function() {
+    searchKiosks();
+});
+</script>
+{% endblock %}

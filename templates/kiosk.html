@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kiosko de Tickets - {{ company.name }}</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary-color: #007bff;
+            --secondary-color: #6c757d;
+            --success-color: #28a745;
+            --warning-color: #ffc107;
+            --danger-color: #dc3545;
+            --light-color: #f8f9fa;
+            --dark-color: #343a40;
+            --company-primary: #{{ company.primary_color|default:"007bff" }};
+            --company-secondary: #{{ company.secondary_color|default:"6c757d" }};
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--company-primary) 0%, var(--company-secondary) 100%);
+            min-height: 100vh;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+        }
+        
+        .kiosk-container {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .kiosk-header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 1rem 2rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            position: relative;
+            z-index: 1000;
+        }
+        
+        .company-logo {
+            max-height: 60px;
+            max-width: 200px;
+            object-fit: contain;
+        }
+        
+        .kiosk-main {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+        
+        .welcome-screen {
+            text-align: center;
+            color: white;
+            max-width: 800px;
+            width: 100%;
+        }
+        
+        .welcome-title {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .welcome-message {
+            font-size: 1.5rem;
+            margin-bottom: 3rem;
+            opacity: 0.9;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+        }
+        
+        .categories-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+        
+        .category-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .category-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+            background: rgba(255, 255, 255, 1);
+        }
+        
+        .category-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            color: var(--company-primary);
+        }
+        
+        .category-name {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--dark-color);
+            margin-bottom: 0.5rem;
+        }
+        
+        .category-description {
+            color: var(--secondary-color);
+            font-size: 1rem;
+        }
+        
+        .ticket-form-screen {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 3rem;
+            max-width: 600px;
+            width: 100%;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+            display: none;
+        }
+        
+        .form-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .form-title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--dark-color);
+            margin-bottom: 0.5rem;
+        }
+        
+        .form-subtitle {
+            color: var(--secondary-color);
+            font-size: 1.1rem;
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-label {
+            font-weight: 600;
+            color: var(--dark-color);
+            margin-bottom: 0.5rem;
+        }
+        
+        .form-control {
+            border-radius: 10px;
+            border: 2px solid #e9ecef;
+            padding: 0.75rem 1rem;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+        
+        .form-control:focus {
+            border-color: var(--company-primary);
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+        }
+        
+        .btn {
+            border-radius: 10px;
+            padding: 0.75rem 2rem;
+            font-weight: 600;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary {
+            background: var(--company-primary);
+            border-color: var(--company-primary);
+        }
+        
+        .btn-primary:hover {
+            background: var(--company-secondary);
+            border-color: var(--company-secondary);
+            transform: translateY(-2px);
+        }
+        
+        .btn-secondary {
+            background: var(--secondary-color);
+            border-color: var(--secondary-color);
+        }
+        
+        .btn-secondary:hover {
+            background: var(--dark-color);
+            border-color: var(--dark-color);
+            transform: translateY(-2px);
+        }
+        
+        .ticket-success-screen {
+            text-align: center;
+            color: white;
+            max-width: 600px;
+            width: 100%;
+            display: none;
+        }
+        
+        .success-icon {
+            font-size: 6rem;
+            color: var(--success-color);
+            margin-bottom: 2rem;
+            animation: bounce 1s ease-in-out;
+        }
+        
+        .ticket-number {
+            font-size: 3rem;
+            font-weight: 700;
+            color: var(--success-color);
+            margin-bottom: 1rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .ticket-info {
+            font-size: 1.2rem;
+            margin-bottom: 2rem;
+            opacity: 0.9;
+        }
+        
+        .loading-screen {
+            text-align: center;
+            color: white;
+            display: none;
+        }
+        
+        .spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid rgba(255,255,255,0.3);
+            border-top: 4px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 2rem;
+        }
+        
+        .maintenance-screen {
+            text-align: center;
+            color: white;
+            max-width: 600px;
+            width: 100%;
+            display: none;
+        }
+        
+        .maintenance-icon {
+            font-size: 6rem;
+            color: var(--warning-color);
+            margin-bottom: 2rem;
+        }
+        
+        .maintenance-message {
+            font-size: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-30px); }
+            60% { transform: translateY(-15px); }
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease-out;
+        }
+        
+        .auto-refresh-indicator {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            color: var(--dark-color);
+            z-index: 1001;
+        }
+        
+        @media (max-width: 768px) {
+            .welcome-title {
+                font-size: 2rem;
+            }
+            
+            .welcome-message {
+                font-size: 1.2rem;
+            }
+            
+            .categories-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+            
+            .category-card {
+                padding: 1.5rem;
+            }
+            
+            .ticket-form-screen {
+                padding: 2rem;
+                margin: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="kiosk-container">
+        <!-- Header -->
+        <header class="kiosk-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center">
+                    {% if company.logo %}
+                        <img src="{{ company.logo.url }}" alt="{{ company.name }}" class="company-logo me-3">
+                    {% endif %}
+                    <div>
+                        <h4 class="mb-0">{{ company.name }}</h4>
+                        <small class="text-muted">Sistema de Tickets</small>
+                    </div>
+                </div>
+                <div class="text-end">
+                    <div id="currentTime" class="h5 mb-0"></div>
+                    <small class="text-muted" id="currentDate"></small>
+                </div>
+            </div>
+        </header>
+        
+        <!-- Auto-refresh Indicator -->
+        {% if settings.kiosk_auto_refresh %}
+        <div class="auto-refresh-indicator">
+            <i class="bi bi-arrow-clockwise me-2"></i>
+            Auto-refresh en <span id="refreshCountdown">{{ settings.kiosk_refresh_interval }}</span>s
+        </div>
+        {% endif %}
+        
+        <!-- Main Content -->
+        <main class="kiosk-main">
+            <!-- Welcome Screen -->
+            <div id="welcomeScreen" class="welcome-screen fade-in">
+                <h1 class="welcome-title">{{ settings.kiosk_welcome_message|default:"Bienvenido al Sistema de Tickets" }}</h1>
+                <p class="welcome-message">Seleccione una categoría para generar su ticket</p>
+                
+                <div class="categories-grid">
+                    {% for category in categories %}
+                    <div class="category-card" onclick="selectCategory({{ category.id }}, '{{ category.name }}')">
+                        <div class="category-icon">
+                            <i class="bi bi-{{ category.icon|default:'folder' }}"></i>
+                        </div>
+                        <div class="category-name">{{ category.name }}</div>
+                        <div class="category-description">{{ category.description|default:"Sin descripción" }}</div>
+                    </div>
+                    {% empty %}
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        No hay categorías disponibles en este momento.
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            
+            <!-- Ticket Form Screen -->
+            <div id="ticketFormScreen" class="ticket-form-screen">
+                <div class="form-header">
+                    <h2 class="form-title" id="formCategoryName">Generar Ticket</h2>
+                    <p class="form-subtitle">Complete la información para generar su ticket</p>
+                </div>
+                
+                <form id="ticketForm">
+                    <input type="hidden" id="categoryId" name="category_id">
+                    
+                    <!-- Subcategory Selection -->
+                    <div class="form-group">
+                        <label for="subcategoryId" class="form-label">
+                            <i class="bi bi-tags me-2"></i>Subcategoría
+                        </label>
+                        <select class="form-control" id="subcategoryId" name="subcategory_id">
+                            <option value="">Seleccionar subcategoría (opcional)</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Priority Selection -->
+                    <div class="form-group">
+                        <label for="priority" class="form-label">
+                            <i class="bi bi-flag me-2"></i>Prioridad
+                        </label>
+                        <select class="form-control" id="priority" name="priority" required>
+                            <option value="">Seleccionar prioridad</option>
+                            <option value="low">Baja</option>
+                            <option value="medium">Media</option>
+                            <option value="high">Alta</option>
+                            <option value="urgent">Urgente</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Dynamic Form Fields -->
+                    <div id="dynamicFields">
+                        <!-- Fields will be loaded here -->
+                    </div>
+                    
+                    <!-- Form Actions -->
+                    <div class="d-flex justify-content-between mt-4">
+                        <button type="button" class="btn btn-secondary" onclick="goBack()">
+                            <i class="bi bi-arrow-left me-2"></i>Volver
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle me-2"></i>Generar Ticket
+                        </button>
+                    </div>
+                </form>
+            </div>
+            
+            <!-- Loading Screen -->
+            <div id="loadingScreen" class="loading-screen">
+                <div class="spinner"></div>
+                <h3>Generando ticket...</h3>
+                <p>Por favor espere un momento</p>
+            </div>
+            
+            <!-- Ticket Success Screen -->
+            <div id="ticketSuccessScreen" class="ticket-success-screen">
+                <div class="success-icon">
+                    <i class="bi bi-check-circle"></i>
+                </div>
+                <h2 class="ticket-number" id="ticketNumber">T-001</h2>
+                <div class="ticket-info" id="ticketInfo">
+                    Su ticket ha sido generado exitosamente
+                </div>
+                <button class="btn btn-primary" onclick="goToWelcome()">
+                    <i class="bi bi-house me-2"></i>Volver al Inicio
+                </button>
+            </div>
+            
+            <!-- Maintenance Screen -->
+            <div id="maintenanceScreen" class="maintenance-screen">
+                <div class="maintenance-icon">
+                    <i class="bi bi-tools"></i>
+                </div>
+                <h2>Sistema en Mantenimiento</h2>
+                <div class="maintenance-message" id="maintenanceMessage">
+                    {{ settings.maintenance_message|default:"El sistema está temporalmente fuera de servicio. Volveremos pronto." }}
+                </div>
+                <button class="btn btn-secondary" onclick="checkSystemStatus()">
+                    <i class="bi bi-arrow-clockwise me-2"></i>Verificar Estado
+                </button>
+            </div>
+        </main>
+    </div>
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // Global variables
+        let currentCategory = null;
+        let currentSubcategory = null;
+        let refreshTimer = null;
+        let refreshInterval = {{ settings.kiosk_refresh_interval|default:30 }};
+        let autoRefresh = {{ settings.kiosk_auto_refresh|yesno:"true,false" }};
+        let soundNotifications = {{ settings.kiosk_sound_notifications|yesno:"true,false" }};
+        
+        // Initialize kiosk
+        document.addEventListener('DOMContentLoaded', function() {
+            updateDateTime();
+            setInterval(updateDateTime, 1000);
+            
+            if (autoRefresh) {
+                startAutoRefresh();
+            }
+            
+            // Check system status
+            checkSystemStatus();
+        });
+        
+        // Update date and time
+        function updateDateTime() {
+            const now = new Date();
+            document.getElementById('currentTime').textContent = now.toLocaleTimeString('es-ES');
+            document.getElementById('currentDate').textContent = now.toLocaleDateString('es-ES', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+        }
+        
+        // Check system status
+        function checkSystemStatus() {
+            fetch('/api/kiosk/status/')
+            .then(response => response.json())
+            .then(data => {
+                if (data.maintenance_mode) {
+                    showMaintenanceScreen(data.maintenance_message);
+                } else {
+                    showWelcomeScreen();
+                }
+            })
+            .catch(error => {
+                console.error('Error checking system status:', error);
+                showWelcomeScreen();
+            });
+        }
+        
+        // Select category
+        function selectCategory(categoryId, categoryName) {
+            currentCategory = categoryId;
+            document.getElementById('categoryId').value = categoryId;
+            document.getElementById('formCategoryName').textContent = `Generar Ticket - ${categoryName}`;
+            
+            // Load subcategories
+            loadSubcategories(categoryId);
+            
+            // Load dynamic form fields
+            loadFormFields(categoryId);
+            
+            showTicketFormScreen();
+        }
+        
+        // Load subcategories
+        function loadSubcategories(categoryId) {
+            fetch(`/api/kiosk/categories/${categoryId}/subcategories/`)
+            .then(response => response.json())
+            .then(data => {
+                const subcategorySelect = document.getElementById('subcategoryId');
+                subcategorySelect.innerHTML = '<option value="">Seleccionar subcategoría (opcional)</option>';
+                
+                data.subcategories.forEach(subcategory => {
+                    const option = document.createElement('option');
+                    option.value = subcategory.id;
+                    option.textContent = subcategory.name;
+                    subcategorySelect.appendChild(option);
+                });
+            })
+            .catch(error => {
+                console.error('Error loading subcategories:', error);
+            });
+        }
+        
+        // Load form fields
+        function loadFormFields(categoryId) {
+            fetch(`/api/kiosk/categories/${categoryId}/template/`)
+            .then(response => response.json())
+            .then(data => {
+                const fieldsContainer = document.getElementById('dynamicFields');
+                fieldsContainer.innerHTML = '';
+                
+                if (data.fields && data.fields.length > 0) {
+                    data.fields.forEach(field => {
+                        const fieldHtml = createFieldHtml(field);
+                        fieldsContainer.innerHTML += fieldHtml;
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Error loading form fields:', error);
+            });
+        }
+        
+        // Create field HTML
+        function createFieldHtml(field) {
+            const required = field.required ? 'required' : '';
+            const requiredLabel = field.required ? ' *' : '';
+            
+            switch (field.type) {
+                case 'text':
+                    return `
+                        <div class="form-group">
+                            <label for="${field.name}" class="form-label">
+                                <i class="bi bi-${field.icon || 'input-cursor'} me-2"></i>${field.label}${requiredLabel}
+                            </label>
+                            <input type="text" class="form-control" id="${field.name}" name="${field.name}" 
+                                   placeholder="${field.placeholder || ''}" ${required}>
+                        </div>
+                    `;
+                case 'textarea':
+                    return `
+                        <div class="form-group">
+                            <label for="${field.name}" class="form-label">
+                                <i class="bi bi-${field.icon || 'textarea-t'} me-2"></i>${field.label}${requiredLabel}
+                            </label>
+                            <textarea class="form-control" id="${field.name}" name="${field.name}" 
+                                      rows="3" placeholder="${field.placeholder || ''}" ${required}></textarea>
+                        </div>
+                    `;
+                case 'select':
+                    const options = field.options ? field.options.map(opt => 
+                        `<option value="${opt.value}">${opt.label}</option>`
+                    ).join('') : '';
+                    return `
+                        <div class="form-group">
+                            <label for="${field.name}" class="form-label">
+                                <i class="bi bi-${field.icon || 'list'} me-2"></i>${field.label}${requiredLabel}
+                            </label>
+                            <select class="form-control" id="${field.name}" name="${field.name}" ${required}>
+                                <option value="">Seleccionar...</option>
+                                ${options}
+                            </select>
+                        </div>
+                    `;
+                default:
+                    return `
+                        <div class="form-group">
+                            <label for="${field.name}" class="form-label">
+                                <i class="bi bi-${field.icon || 'input-cursor'} me-2"></i>${field.label}${requiredLabel}
+                            </label>
+                            <input type="text" class="form-control" id="${field.name}" name="${field.name}" 
+                                   placeholder="${field.placeholder || ''}" ${required}>
+                        </div>
+                    `;
+            }
+        }
+        
+        // Handle form submission
+        document.getElementById('ticketForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const data = Object.fromEntries(formData.entries());
+            
+            showLoadingScreen();
+            
+            fetch('/api/kiosk/generate-ticket/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    if (soundNotifications) {
+                        playNotificationSound();
+                    }
+                    showTicketSuccessScreen(data.ticket);
+                } else {
+                    alert('Error: ' + data.message);
+                    showTicketFormScreen();
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error al generar el ticket');
+                showTicketFormScreen();
+            });
+        });
+        
+        // Show screens
+        function showWelcomeScreen() {
+            hideAllScreens();
+            document.getElementById('welcomeScreen').style.display = 'block';
+            document.getElementById('welcomeScreen').classList.add('fade-in');
+        }
+        
+        function showTicketFormScreen() {
+            hideAllScreens();
+            document.getElementById('ticketFormScreen').style.display = 'block';
+            document.getElementById('ticketFormScreen').classList.add('fade-in');
+        }
+        
+        function showLoadingScreen() {
+            hideAllScreens();
+            document.getElementById('loadingScreen').style.display = 'block';
+        }
+        
+        function showTicketSuccessScreen(ticket) {
+            hideAllScreens();
+            document.getElementById('ticketNumber').textContent = ticket.number;
+            document.getElementById('ticketInfo').textContent = `Categoría: ${ticket.category} | Prioridad: ${ticket.priority}`;
+            document.getElementById('ticketSuccessScreen').style.display = 'block';
+            document.getElementById('ticketSuccessScreen').classList.add('fade-in');
+        }
+        
+        function showMaintenanceScreen(message) {
+            hideAllScreens();
+            document.getElementById('maintenanceMessage').textContent = message;
+            document.getElementById('maintenanceScreen').style.display = 'block';
+        }
+        
+        function hideAllScreens() {
+            const screens = ['welcomeScreen', 'ticketFormScreen', 'loadingScreen', 'ticketSuccessScreen', 'maintenanceScreen'];
+            screens.forEach(screen => {
+                document.getElementById(screen).style.display = 'none';
+                document.getElementById(screen).classList.remove('fade-in');
+            });
+        }
+        
+        // Navigation functions
+        function goBack() {
+            showWelcomeScreen();
+        }
+        
+        function goToWelcome() {
+            showWelcomeScreen();
+        }
+        
+        // Auto-refresh functions
+        function startAutoRefresh() {
+            if (refreshTimer) {
+                clearInterval(refreshTimer);
+            }
+            
+            refreshTimer = setInterval(() => {
+                location.reload();
+            }, refreshInterval * 1000);
+            
+            updateRefreshCountdown();
+        }
+        
+        function updateRefreshCountdown() {
+            if (!autoRefresh) return;
+            
+            let countdown = refreshInterval;
+            const countdownElement = document.getElementById('refreshCountdown');
+            
+            const countdownTimer = setInterval(() => {
+                countdown--;
+                if (countdownElement) {
+                    countdownElement.textContent = countdown;
+                }
+                
+                if (countdown <= 0) {
+                    clearInterval(countdownTimer);
+                }
+            }, 1000);
+        }
+        
+        // Utility functions
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+        
+        function playNotificationSound() {
+            // Create a simple notification sound
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+            oscillator.frequency.setValueAtTime(600, audioContext.currentTime + 0.1);
+            
+            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+            
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 0.3);
+        }
+    </script>
+</body>
+</html>

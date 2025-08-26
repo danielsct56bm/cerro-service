@@ -1,0 +1,466 @@
+{% extends 'base.html' %}
+
+{% block title %}Configuración de Administrador - ServiceNow Cerro Verde{% endblock %}
+
+{% block extra_css %}
+<style>
+    .setup-container {
+        background: var(--neutral-light);
+        border-radius: 15px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        margin: 2rem auto;
+        max-width: 800px;
+        overflow: hidden;
+    }
+    
+    .setup-header {
+        background: var(--primary-dark);
+        color: var(--neutral-light);
+        padding: 2rem;
+        text-align: center;
+    }
+    
+    .setup-header h1 {
+        margin: 0;
+        font-size: 2rem;
+        font-weight: 300;
+    }
+    
+    .setup-header p {
+        margin: 0.5rem 0 0 0;
+        opacity: 0.9;
+    }
+    
+    .stepper {
+        display: flex;
+        justify-content: center;
+        padding: 2rem;
+        background: var(--neutral-gray);
+    }
+    
+    .step {
+        display: flex;
+        align-items: center;
+        margin: 0 1rem;
+    }
+    
+    .step-number {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: var(--neutral-light);
+        border: 2px solid var(--primary-light);
+        color: var(--primary-light);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        margin-right: 0.5rem;
+    }
+    
+    .step.active .step-number {
+        background: var(--primary-light);
+        color: var(--neutral-light);
+    }
+    
+    .step.completed .step-number {
+        background: var(--accent-green);
+        border-color: var(--accent-green);
+        color: var(--neutral-light);
+    }
+    
+    .step-label {
+        color: var(--primary-dark);
+        font-weight: 500;
+    }
+    
+    .step.active .step-label {
+        color: var(--primary-light);
+    }
+    
+    .step.completed .step-label {
+        color: var(--accent-green);
+    }
+    
+    .step-connector {
+        width: 60px;
+        height: 2px;
+        background: var(--neutral-gray);
+        margin: 0 0.5rem;
+    }
+    
+    .step-connector.active {
+        background: var(--primary-light);
+    }
+    
+    .step-connector.completed {
+        background: var(--accent-green);
+    }
+    
+    .setup-content {
+        padding: 3rem;
+    }
+    
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+    
+    .form-label {
+        font-weight: 600;
+        color: var(--primary-dark);
+        margin-bottom: 0.5rem;
+    }
+    
+    .form-control {
+        border: 2px solid var(--neutral-gray);
+        border-radius: 8px;
+        padding: 0.75rem;
+        transition: all 0.3s ease;
+    }
+    
+    .form-control:focus {
+        border-color: var(--primary-light);
+        box-shadow: 0 0 0 0.2rem rgba(128, 182, 161, 0.25);
+    }
+    
+    .avatar-section {
+        background: var(--neutral-gray);
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .avatar-options {
+        display: flex;
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+    
+    .avatar-option {
+        flex: 1;
+        text-align: center;
+        padding: 1rem;
+        border: 2px solid var(--neutral-gray);
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .avatar-option:hover {
+        border-color: var(--primary-light);
+    }
+    
+    .avatar-option.selected {
+        border-color: var(--primary-light);
+        background: rgba(128, 182, 161, 0.1);
+    }
+    
+    .avatar-preview {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        border: 3px solid var(--primary-light);
+        object-fit: cover;
+        margin: 0 auto 0.5rem;
+        display: block;
+    }
+    
+    .file-upload {
+        position: relative;
+        display: inline-block;
+        cursor: pointer;
+        width: 100%;
+    }
+    
+    .file-upload input[type=file] {
+        position: absolute;
+        opacity: 0;
+        width: 100%;
+        height: 100%;
+        cursor: pointer;
+    }
+    
+    .file-upload-label {
+        display: block;
+        padding: 1rem;
+        border: 2px dashed var(--primary-light);
+        border-radius: 8px;
+        text-align: center;
+        color: var(--primary-light);
+        transition: all 0.3s ease;
+    }
+    
+    .file-upload:hover .file-upload-label {
+        background: var(--primary-light);
+        color: var(--neutral-light);
+    }
+    
+    .generated-avatar {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        border: 3px solid var(--primary-light);
+        margin: 0 auto 0.5rem;
+        display: block;
+    }
+    
+    .password-strength {
+        margin-top: 0.5rem;
+        font-size: 0.875rem;
+    }
+    
+    .strength-weak { color: #dc3545; }
+    .strength-medium { color: #ffc107; }
+    .strength-strong { color: var(--accent-green); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="setup-container">
+    <!-- Header -->
+    <div class="setup-header">
+        <h1>Configuración del Sistema</h1>
+        <p>ServiceNow Cerro Verde - Configuración inicial</p>
+    </div>
+    
+    <!-- Stepper -->
+    <div class="stepper">
+        <div class="step completed">
+            <div class="step-number">1</div>
+            <div class="step-label">Empresa</div>
+        </div>
+        <div class="step-connector active"></div>
+        <div class="step active">
+            <div class="step-number">2</div>
+            <div class="step-label">Administrador</div>
+        </div>
+    </div>
+    
+    <!-- Content -->
+    <div class="setup-content">
+        <h3 class="mb-4">Paso 2: Configuración del Administrador</h3>
+        <p class="text-muted mb-4">Configure la cuenta del administrador del sistema.</p>
+        
+        <form method="post" enctype="multipart/form-data" id="admin-form">
+            {% csrf_token %}
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="first_name" class="form-label">Nombre *</label>
+                        <input type="text" class="form-control" id="first_name" name="first_name" required>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="last_name" class="form-label">Apellido *</label>
+                        <input type="text" class="form-control" id="last_name" name="last_name" required>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="username" class="form-label">Nombre de Usuario *</label>
+                        <input type="text" class="form-control" id="username" name="username" required>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="email" class="form-label">Email *</label>
+                        <input type="email" class="form-control" id="email" name="email" required>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="password" class="form-label">Contraseña *</label>
+                        <input type="password" class="form-control" id="password" name="password" required onkeyup="checkPasswordStrength(this.value)">
+                        <div class="password-strength" id="password-strength"></div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="confirm_password" class="form-label">Confirmar Contraseña *</label>
+                        <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label for="title" class="form-label">Cargo</label>
+                        <input type="text" class="form-control" id="title" name="title">
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label for="department" class="form-label">Departamento</label>
+                        <input type="text" class="form-control" id="department" name="department">
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label for="location" class="form-label">Ubicación</label>
+                        <input type="text" class="form-control" id="location" name="location">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="sap_id" class="form-label">ID SAP</label>
+                        <input type="text" class="form-control" id="sap_id" name="sap_id">
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="employee_number" class="form-label">Número de Empleado</label>
+                        <input type="text" class="form-control" id="employee_number" name="employee_number">
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Avatar Section -->
+            <div class="avatar-section">
+                <h5 class="mb-3">Avatar del Administrador</h5>
+                <div class="avatar-options">
+                    <div class="avatar-option selected" onclick="selectAvatarOption('generated')">
+                        <img id="generated-avatar-preview" class="generated-avatar" src="https://api.dicebear.com/9.x/initials/svg?seed=Admin" alt="Avatar Generado">
+                        <div>Avatar Generado</div>
+                        <small class="text-muted">Basado en el nombre</small>
+                    </div>
+                    <div class="avatar-option" onclick="selectAvatarOption('upload')">
+                        <div class="file-upload">
+                            <input type="file" id="avatar" name="avatar" accept="image/*" onchange="previewAvatar(this)">
+                            <label for="avatar" class="file-upload-label">
+                                <i class="fas fa-upload me-2"></i>
+                                Subir Imagen
+                            </label>
+                        </div>
+                        <img id="uploaded-avatar-preview" class="avatar-preview" style="display: none;">
+                    </div>
+                </div>
+                <input type="hidden" id="avatar_type" name="avatar_type" value="generated">
+            </div>
+            
+            <div class="d-flex justify-content-between mt-4">
+                <a href="{% url 'CPsetup:setup_company' %}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>
+                    Anterior
+                </a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-check me-2"></i>
+                    Completar Configuración
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let selectedAvatarType = 'generated';
+
+function selectAvatarOption(type) {
+    selectedAvatarType = type;
+    document.getElementById('avatar_type').value = type;
+    
+    // Update UI
+    document.querySelectorAll('.avatar-option').forEach(option => {
+        option.classList.remove('selected');
+    });
+    event.currentTarget.classList.add('selected');
+    
+    if (type === 'generated') {
+        updateGeneratedAvatar();
+    }
+}
+
+function updateGeneratedAvatar() {
+    const firstName = document.getElementById('first_name').value;
+    const lastName = document.getElementById('last_name').value;
+    const username = document.getElementById('username').value;
+    
+    let seed = `${firstName} ${lastName}`.trim();
+    if (!seed) {
+        seed = username || 'Admin';
+    }
+    
+    const avatarUrl = `https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(seed)}`;
+    document.getElementById('generated-avatar-preview').src = avatarUrl;
+}
+
+function previewAvatar(input) {
+    const preview = document.getElementById('uploaded-avatar-preview');
+    const file = input.files[0];
+    
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            preview.src = e.target.result;
+            preview.style.display = 'block';
+        }
+        reader.readAsDataURL(file);
+    } else {
+        preview.style.display = 'none';
+    }
+}
+
+function checkPasswordStrength(password) {
+    const strengthDiv = document.getElementById('password-strength');
+    let strength = 0;
+    let message = '';
+    let className = '';
+    
+    if (password.length >= 8) strength++;
+    if (/[a-z]/.test(password)) strength++;
+    if (/[A-Z]/.test(password)) strength++;
+    if (/[0-9]/.test(password)) strength++;
+    if (/[^A-Za-z0-9]/.test(password)) strength++;
+    
+    if (strength < 3) {
+        message = 'Débil';
+        className = 'strength-weak';
+    } else if (strength < 5) {
+        message = 'Media';
+        className = 'strength-medium';
+    } else {
+        message = 'Fuerte';
+        className = 'strength-strong';
+    }
+    
+    strengthDiv.textContent = `Fortaleza: ${message}`;
+    strengthDiv.className = `password-strength ${className}`;
+}
+
+// Event listeners
+document.getElementById('first_name').addEventListener('input', updateGeneratedAvatar);
+document.getElementById('last_name').addEventListener('input', updateGeneratedAvatar);
+document.getElementById('username').addEventListener('input', updateGeneratedAvatar);
+
+// Form validation
+document.getElementById('admin-form').addEventListener('submit', function(e) {
+    const password = document.getElementById('password').value;
+    const confirmPassword = document.getElementById('confirm_password').value;
+    
+    if (password !== confirmPassword) {
+        e.preventDefault();
+        alert('Las contraseñas no coinciden');
+        return false;
+    }
+    
+    if (password.length < 8) {
+        e.preventDefault();
+        alert('La contraseña debe tener al menos 8 caracteres');
+        return false;
+    }
+});
+</script>
+{% endblock %}
