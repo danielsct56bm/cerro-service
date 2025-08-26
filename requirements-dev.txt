@@ -1,0 +1,16 @@
+Django==4.2.7
+djangorestframework==3.14.0
+django-cors-headers==4.3.1
+channels==4.0.0
+channels-redis==4.1.0
+django-bootstrap5==23.3
+drf-spectacular==0.27.2
+pyodbc==5.0.1
+redis==5.0.1
+Pillow==10.1.0
+pandas
+chardet
+mssql-django
+django-filter
+requests
+django-redis
