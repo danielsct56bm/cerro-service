@@ -62,23 +62,66 @@
                             <h6 class="text-muted mb-3">Configuración de Cuenta</h6>
                             
                             <div class="mb-3">
-                                <label for="password" class="form-label">Contraseña *</label>
-                                <div class="input-group">
-                                    <input type="password" class="form-control" id="password" name="password" required>
-                                    <button type="button" class="password-toggle" onclick="togglePassword('password')">
-                                        <i class="bi bi-eye" id="password_icon"></i>
-                                    </button>
-                                </div>
-                                <div class="form-text">Mínimo 8 caracteres</div>
+                                <label for="password_mode" class="form-label">Tipo de Contraseña *</label>
+                                <select class="form-select" id="password_mode" name="password_mode" required>
+                                    <option value="auto" selected>
+                                        🔮 Generar Contraseña Automáticamente
+                                    </option>
+                                    <option value="manual">
+                                        ✏️ Escribir Contraseña Manualmente
+                                    </option>
+                                </select>
+                                <div class="form-text">Seleccione cómo desea manejar la contraseña del usuario</div>
                             </div>
                             
-                            <div class="mb-3">
-                                <label for="confirm_password" class="form-label">Confirmar Contraseña *</label>
-                                <div class="input-group">
-                                    <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
-                                    <button type="button" class="password-toggle" onclick="togglePassword('confirm_password')">
-                                        <i class="bi bi-eye" id="confirm_password_icon"></i>
-                                    </button>
+                                                         <!-- Contraseña Automática -->
+                             <div id="auto_password_section" class="password-section">
+                                 <div class="password-management">
+                                     <!-- Campo de contraseña generada -->
+                                     <div class="mb-3">
+                                         <label class="form-label">Contraseña Generada</label>
+                                         <input type="text" class="form-control password-display" id="auto_password_display" readonly>
+                                         <div class="form-text">
+                                             <i class="bi bi-shield-check"></i> Contraseña segura de 12 caracteres
+                                         </div>
+                                     </div>
+                                     
+                                     <!-- Botones de acción -->
+                                     <div class="password-actions">
+                                         <div class="row">
+                                             <div class="col-md-6">
+                                                 <button type="button" class="btn btn-outline-primary w-100" id="generate_password">
+                                                     <i class="bi bi-arrow-clockwise"></i> Generar Nueva
+                                                 </button>
+                                             </div>
+                                             <div class="col-md-6">
+                                                 <button type="button" class="btn btn-outline-success w-100" id="copy_password">
+                                                     <i class="bi bi-clipboard"></i> Copiar al Portapapeles
+                                                 </button>
+                                             </div>
+                                         </div>
+                                     </div>
+                                 </div>
+                             </div>
+                            
+                            <!-- Contraseña Manual -->
+                            <div id="manual_password_section" class="password-section" style="display: none;">
+                                <div class="password-management">
+                                    <div class="input-group mb-2">
+                                        <input type="password" class="form-control" id="password" name="password" placeholder="Escriba la contraseña">
+                                        <button type="button" class="password-toggle" onclick="togglePassword('password')">
+                                            <i class="bi bi-eye" id="password_icon"></i>
+                                        </button>
+                                    </div>
+                                    <div class="input-group mb-2">
+                                        <input type="password" class="form-control" id="confirm_password" name="confirm_password" placeholder="Confirme la contraseña">
+                                        <button type="button" class="password-toggle" onclick="togglePassword('confirm_password')">
+                                            <i class="bi bi-eye" id="confirm_password_icon"></i>
+                                        </button>
+                                    </div>
+                                    <div class="form-text">
+                                        <i class="bi bi-info-circle"></i> Mínimo 8 caracteres, incluir mayúsculas, minúsculas, números y símbolos
+                                    </div>
                                 </div>
                             </div>
                             
@@ -147,6 +190,15 @@
                                         <div class="form-text">Enviar credenciales por email</div>
                                     </div>
                                 </div>
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="show_password_after_create" name="show_password_after_create" checked>
+                                        <label class="form-check-label" for="show_password_after_create">
+                                            Mostrar Contraseña al Crear
+                                        </label>
+                                        <div class="form-text">Mostrar la contraseña después de crear el usuario</div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -208,6 +260,102 @@
     .form-text {
         color: var(--neutral-gray);
     }
+    
+    .password-management {
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 1rem;
+        background: rgba(var(--bs-primary-rgb), 0.05);
+        margin-top: 0.5rem;
+    }
+    
+    .password-section {
+        transition: all 0.3s ease;
+    }
+    
+    .form-select {
+        font-weight: 500;
+    }
+    
+    .form-select option {
+        padding: 0.5rem;
+    }
+    
+    .password-display {
+        font-family: 'Courier New', monospace;
+        font-weight: bold;
+        font-size: 1.1rem;
+        background: var(--neutral-light);
+        border: 2px solid var(--accent-green);
+        color: var(--text-color);
+        padding: 0.75rem;
+        text-align: center;
+        letter-spacing: 1px;
+    }
+    
+    .password-display:focus {
+        box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
+        border-color: var(--accent-green);
+    }
+    
+    .password-actions {
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid var(--border-color);
+    }
+    
+    .password-actions .btn {
+        margin-bottom: 0.5rem;
+        font-weight: 500;
+    }
+    
+    .btn-outline-primary {
+        border-color: var(--primary-dark);
+        color: var(--primary-dark);
+    }
+    
+    .btn-outline-primary:hover {
+        background-color: var(--primary-dark);
+        border-color: var(--primary-dark);
+        color: var(--neutral-light);
+    }
+    
+    .btn-outline-success {
+        border-color: var(--accent-green);
+        color: var(--accent-green);
+    }
+    
+    .btn-outline-success:hover {
+        background-color: var(--accent-green);
+        border-color: var(--accent-green);
+        color: var(--neutral-light);
+    }
+    
+    .password-strength-indicator {
+        margin-top: 0.5rem;
+        padding: 0.5rem;
+        border-radius: 4px;
+        font-size: 0.8rem;
+        font-weight: 500;
+    }
+    
+    .password-strength-weak {
+        background: rgba(220, 53, 69, 0.1);
+        color: #dc3545;
+        border-left: 3px solid #dc3545;
+    }
+    
+    .password-strength-medium {
+        background: rgba(255, 193, 7, 0.1);
+        color: #ffc107;
+        border-left: 3px solid #ffc107;
+    }
+    
+    .password-strength-strong {
+        background: rgba(40, 167, 69, 0.1);
+        color: #28a745;
+        border-left: 3px solid #28a745;
+    }
 </style>
 {% endblock %}
 
@@ -216,20 +364,156 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const form = document.querySelector('form');
+    const passwordMode = document.getElementById('password_mode');
     const password = document.getElementById('password');
     const confirmPassword = document.getElementById('confirm_password');
+    const autoPasswordDisplay = document.getElementById('auto_password_display');
+    const autoPasswordSection = document.getElementById('auto_password_section');
+    const manualPasswordSection = document.getElementById('manual_password_section');
+    const generatePasswordBtn = document.getElementById('generate_password');
+    const copyPasswordBtn = document.getElementById('copy_password');
     
-    // Validación de contraseñas
+    // Función para generar contraseña segura
+    function generatePassword() {
+        const length = 12;
+        const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*";
+        let password = "";
+        
+        // Asegurar que tenga al menos una de cada tipo
+        password += "ABCDEFGHIJKLMNOPQRSTUVWXYZ"[Math.floor(Math.random() * 26)]; // Mayúscula
+        password += "abcdefghijklmnopqrstuvwxyz"[Math.floor(Math.random() * 26)]; // Minúscula
+        password += "0123456789"[Math.floor(Math.random() * 10)]; // Número
+        password += "!@#$%^&*"[Math.floor(Math.random() * 8)]; // Símbolo
+        
+        // Completar el resto
+        for (let i = 4; i < length; i++) {
+            password += charset[Math.floor(Math.random() * charset.length)];
+        }
+        
+        // Mezclar la contraseña
+        password = password.split('').sort(() => Math.random() - 0.5).join('');
+        
+        autoPasswordDisplay.value = password;
+        
+        // Agregar efecto visual mejorado
+        autoPasswordDisplay.style.transform = 'scale(1.05)';
+        autoPasswordDisplay.style.boxShadow = '0 0 15px rgba(var(--bs-primary-rgb), 0.4)';
+        autoPasswordDisplay.style.borderColor = 'var(--primary-dark)';
+        
+        setTimeout(() => {
+            autoPasswordDisplay.style.transform = 'scale(1)';
+            autoPasswordDisplay.style.boxShadow = 'none';
+            autoPasswordDisplay.style.borderColor = 'var(--accent-green)';
+        }, 300);
+    }
+    
+    // Función para copiar al portapapeles
+    function copyToClipboard() {
+        autoPasswordDisplay.select();
+        autoPasswordDisplay.setSelectionRange(0, 99999); // Para móviles
+        
+        try {
+            document.execCommand('copy');
+            
+            // Mostrar notificación
+            const originalText = copyPasswordBtn.innerHTML;
+            copyPasswordBtn.innerHTML = '<i class="bi bi-check-lg"></i> ¡Copiado!';
+            copyPasswordBtn.classList.add('btn-success');
+            copyPasswordBtn.classList.remove('btn-outline-success');
+            
+            // Efecto visual en el campo de contraseña
+            autoPasswordDisplay.style.transform = 'scale(1.02)';
+            autoPasswordDisplay.style.boxShadow = '0 0 10px rgba(40, 167, 69, 0.5)';
+            
+            setTimeout(() => {
+                copyPasswordBtn.innerHTML = originalText;
+                copyPasswordBtn.classList.remove('btn-success');
+                copyPasswordBtn.classList.add('btn-outline-success');
+                autoPasswordDisplay.style.transform = 'scale(1)';
+                autoPasswordDisplay.style.boxShadow = 'none';
+            }, 2000);
+            
+        } catch (err) {
+            console.error('Error al copiar: ', err);
+        }
+    }
+    
+    // Función para cambiar entre modos
+    function togglePasswordMode() {
+        const mode = passwordMode.value;
+        
+        if (mode === 'auto') {
+            autoPasswordSection.style.display = 'block';
+            manualPasswordSection.style.display = 'none';
+            password.removeAttribute('required');
+            confirmPassword.removeAttribute('required');
+            generatePassword(); // Generar contraseña al cambiar a modo automático
+        } else {
+            autoPasswordSection.style.display = 'none';
+            manualPasswordSection.style.display = 'block';
+            password.setAttribute('required', 'required');
+            confirmPassword.setAttribute('required', 'required');
+        }
+    }
+    
+    // Event listeners
+    passwordMode.addEventListener('change', togglePasswordMode);
+    generatePasswordBtn.addEventListener('click', generatePassword);
+    copyPasswordBtn.addEventListener('click', copyToClipboard);
+    
+    // Generar contraseña automáticamente al cargar
+    generatePassword();
+    
+    // Validación de contraseñas manuales
     function validatePasswords() {
         if (password.value !== confirmPassword.value) {
             confirmPassword.setCustomValidity('Las contraseñas no coinciden');
         } else {
             confirmPassword.setCustomValidity('');
         }
+        
+        // Verificar fortaleza de contraseña
+        checkPasswordStrength(password.value);
     }
     
     password.addEventListener('change', validatePasswords);
     confirmPassword.addEventListener('keyup', validatePasswords);
+    
+    // Función para verificar fortaleza de contraseña
+    function checkPasswordStrength(password) {
+        let strength = 0;
+        
+        if (password.length >= 8) strength++;
+        if (/[a-z]/.test(password)) strength++;
+        if (/[A-Z]/.test(password)) strength++;
+        if (/\d/.test(password)) strength++;
+        if (/[!@#$%^&*]/.test(password)) strength++;
+        
+        let strengthClass = '';
+        let strengthText = '';
+        
+        if (strength < 3) {
+            strengthClass = 'password-strength-weak';
+            strengthText = 'Débil';
+        } else if (strength < 5) {
+            strengthClass = 'password-strength-medium';
+            strengthText = 'Media';
+        } else {
+            strengthClass = 'password-strength-strong';
+            strengthText = 'Fuerte';
+        }
+        
+        // Mostrar indicador de fortaleza
+        let strengthIndicator = document.getElementById('password-strength-indicator');
+        if (!strengthIndicator) {
+            strengthIndicator = document.createElement('div');
+            strengthIndicator.id = 'password-strength-indicator';
+            password.parentNode.parentNode.appendChild(strengthIndicator);
+        }
+        
+        strengthIndicator.className = `password-strength-indicator ${strengthClass}`;
+        strengthIndicator.innerHTML = `<i class="bi bi-shield"></i> Fortaleza: ${strengthText} (${strength}/5)`;
+    }
     
     // Validación de nombre de usuario
     const username = document.getElementById('username');
@@ -241,17 +525,23 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
-    // Validación de contraseña
-    password.addEventListener('blur', function() {
-        if (password.value.length < 8) {
-            password.setCustomValidity('La contraseña debe tener al menos 8 caracteres');
-        } else {
-            password.setCustomValidity('');
-        }
-    });
-    
     // Validación del formulario
     form.addEventListener('submit', function(e) {
+        // Si está en modo automático, establecer la contraseña generada
+        if (passwordMode.value === 'auto') {
+            const hiddenPassword = document.createElement('input');
+            hiddenPassword.type = 'hidden';
+            hiddenPassword.name = 'password';
+            hiddenPassword.value = autoPasswordDisplay.value;
+            form.appendChild(hiddenPassword);
+            
+            const hiddenConfirmPassword = document.createElement('input');
+            hiddenConfirmPassword.type = 'hidden';
+            hiddenConfirmPassword.name = 'confirm_password';
+            hiddenConfirmPassword.value = autoPasswordDisplay.value;
+            form.appendChild(hiddenConfirmPassword);
+        }
+        
         if (!form.checkValidity()) {
             e.preventDefault();
             e.stopPropagation();

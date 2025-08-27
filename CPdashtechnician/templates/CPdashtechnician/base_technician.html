@@ -1,0 +1,754 @@
+{% extends 'base.html' %}
+
+{% block title %}{% block technician_title %}Panel del Técnico{% endblock %} {{ user.company.name }} {% endblock %}
+
+{% block extra_css %}
+{{ block.super }}
+<style>
+    /* Reset para ocupar toda la pantalla */
+    body {
+        margin: 0;
+        padding: 0;
+        overflow-x: hidden;
+    }
+    
+    /* Override del main del base.html */
+    main {
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+    
+    main .container {
+        padding: 0 !important;
+        margin: 0 !important;
+        max-width: none !important;
+    }
+    
+    .technician-container {
+        min-height: 100vh;
+        background: var(--bg-color);
+        display: flex;
+        flex-direction: column;
+        margin: 0;
+        padding: 0;
+    }
+    
+    .navbar {
+        background: var(--primary-dark);
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        flex-shrink: 0;
+        padding: 0.5rem 1rem;
+    }
+    
+    .navbar-brand {
+        color: var(--neutral-light) !important;
+        font-weight: bold;
+        font-size: 1.2rem;
+    }
+    
+    .navbar-nav .nav-link {
+        color: var(--neutral-light) !important;
+        transition: color 0.3s ease;
+    }
+    
+    .navbar-nav .nav-link:hover {
+        color: var(--primary-light) !important;
+    }
+    
+    .user-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        border: 2px solid var(--primary-light);
+        object-fit: cover;
+    }
+    
+    /* Botón de tema mejorado */
+    .theme-toggle {
+        background: none;
+        border: 2px solid var(--primary-light);
+        color: var(--primary-light);
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        margin-right: 1rem;
+    }
+    
+    .theme-toggle:hover {
+        background: var(--primary-light);
+        color: var(--neutral-light);
+        transform: scale(1.1);
+    }
+    
+    .theme-toggle:focus {
+        outline: none;
+        box-shadow: 0 0 0 2px rgba(128, 182, 161, 0.3);
+    }
+    
+    .main-content {
+        flex: 1;
+        display: flex;
+        min-height: calc(100vh - 80px);
+        margin: 0;
+        padding: 0;
+        transition: all 0.3s ease;
+    }
+    
+    .sidebar {
+        background: var(--sidebar-bg);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        width: 280px;
+        flex-shrink: 0;
+        overflow-y: auto;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        z-index: 1000;
+    }
+    
+    .sidebar.collapsed {
+        width: 70px;
+    }
+    
+    .sidebar-header {
+        padding: 1.5rem;
+        border-bottom: 1px solid var(--border-color);
+        background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-light) 100%);
+        color: var(--neutral-light);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        position: relative;
+        z-index: 100;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+    
+    .sidebar-header h5 {
+        margin: 0;
+        font-weight: 600;
+        font-size: 1.1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .sidebar-header .toggle-btn {
+        background: none;
+        border: none;
+        color: var(--neutral-light);
+        font-size: 1.2rem;
+        cursor: pointer;
+        padding: 0.5rem;
+        border-radius: 4px;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 32px;
+        min-height: 32px;
+    }
+    
+    .sidebar-header .toggle-btn:hover {
+        background: rgba(255, 255, 255, 0.1);
+        transform: scale(1.1);
+    }
+    
+    .sidebar.collapsed .sidebar-header h5 .sidebar-text {
+        display: none;
+    }
+    
+    .sidebar-nav {
+        padding: 1rem 0;
+    }
+    
+    .nav-section {
+        margin-bottom: 1.5rem;
+    }
+    
+    .nav-section-title {
+        padding: 0.75rem 1.5rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        color: var(--text-color);
+        opacity: 0.8;
+        letter-spacing: 0.5px;
+        margin-bottom: 0.5rem;
+        transition: opacity 0.3s ease;
+    }
+    
+    .sidebar.collapsed .nav-section-title {
+        opacity: 0;
+        height: 0;
+        padding: 0;
+        margin: 0;
+        overflow: hidden;
+    }
+    
+    .nav-item {
+        margin: 0.25rem 0;
+    }
+    
+    .nav-link {
+        display: flex;
+        align-items: center;
+        padding: 0.75rem 1.5rem;
+        color: var(--text-color);
+        text-decoration: none;
+        transition: all 0.3s ease;
+        border-radius: 0 25px 25px 0;
+        margin: 0 0 0 1rem;
+        position: relative;
+        white-space: nowrap;
+        font-weight: 500;
+    }
+    
+    .nav-link:hover {
+        background: rgba(var(--bs-primary-rgb), 0.1);
+        color: var(--primary-dark);
+        transform: translateX(5px);
+    }
+    
+    .nav-link:hover .nav-icon {
+        color: var(--primary-dark);
+    }
+    
+    .nav-link.active {
+        background: var(--primary-dark);
+        color: var(--neutral-light);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    }
+    
+    .nav-link.active .nav-icon {
+        color: var(--neutral-light);
+    }
+    
+    .nav-link.active::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 4px;
+        background: var(--accent-green);
+        border-radius: 0 2px 2px 0;
+    }
+    
+    .nav-icon {
+        width: 20px;
+        margin-right: 0.75rem;
+        text-align: center;
+        font-size: 1.1rem;
+        flex-shrink: 0;
+        color: var(--text-color);
+        transition: color 0.3s ease;
+        opacity: 0.9;
+    }
+    
+    .sidebar.collapsed .nav-icon {
+        margin-right: 0;
+        font-size: 1.3rem;
+        width: auto;
+    }
+    
+    .nav-text {
+        font-weight: 500;
+        transition: opacity 0.3s ease;
+        flex: 1;
+        color: var(--text-color);
+    }
+    
+    .sidebar.collapsed .nav-text {
+        opacity: 0;
+        width: 0;
+        overflow: hidden;
+    }
+    
+    /* Mejoras de contraste para tema oscuro */
+    [data-theme="dark"] .nav-link {
+        color: var(--text-color);
+    }
+    
+    [data-theme="dark"] .nav-link:hover {
+        background: rgba(128, 182, 161, 0.2);
+        color: var(--primary-light);
+    }
+    
+    [data-theme="dark"] .nav-link.active {
+        background: var(--primary-light);
+        color: var(--primary-dark);
+    }
+    
+    [data-theme="dark"] .nav-link.active .nav-icon {
+        color: var(--primary-dark);
+    }
+    
+    [data-theme="dark"] .nav-icon {
+        color: var(--text-color);
+        opacity: 0.9;
+    }
+    
+    [data-theme="dark"] .nav-text {
+        color: var(--text-color);
+    }
+    
+    [data-theme="dark"] .nav-section-title {
+        color: var(--text-color);
+        opacity: 0.8;
+    }
+    
+    [data-theme="dark"] .content-title {
+        color: var(--primary-light);
+    }
+    
+    [data-theme="dark"] .breadcrumb-item.active {
+        color: var(--primary-light);
+    }
+    
+    [data-theme="dark"] .breadcrumb-item a:hover {
+        color: var(--primary-light);
+    }
+    
+    .content-area {
+        flex: 1;
+        background: var(--content-bg);
+        padding: 2rem;
+        overflow-y: auto;
+        transition: all 0.3s ease;
+    }
+    
+    .content-header {
+        margin-bottom: 2rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid var(--border-color);
+    }
+    
+    .content-title {
+        color: var(--primary-dark);
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+    }
+    
+    .content-subtitle {
+        color: var(--text-color);
+        opacity: 0.8;
+        font-size: 1.1rem;
+        margin: 0;
+    }
+    
+    .breadcrumb {
+        background: none;
+        padding: 0;
+        margin-bottom: 1rem;
+    }
+    
+    .breadcrumb-item {
+        color: var(--text-color);
+        opacity: 0.7;
+    }
+    
+    .breadcrumb-item a {
+        color: var(--text-color);
+        opacity: 0.7;
+        text-decoration: none;
+    }
+    
+    .breadcrumb-item a:hover {
+        color: var(--primary-dark);
+        opacity: 1;
+    }
+    
+    .breadcrumb-item.active {
+        color: var(--primary-dark);
+        font-weight: 600;
+        opacity: 1;
+    }
+    
+    .breadcrumb-item + .breadcrumb-item::before {
+        content: ">";
+        color: var(--text-color);
+        opacity: 0.7;
+        margin: 0 0.5rem;
+    }
+    
+    /* Responsive mejorado */
+    @media (max-width: 768px) {
+        .sidebar {
+            position: fixed;
+            left: -280px;
+            top: 0;
+            height: 100vh;
+            z-index: 1000;
+            width: 280px;
+        }
+        
+        .sidebar.show {
+            left: 0;
+        }
+        
+        .sidebar.collapsed {
+            width: 280px;
+        }
+        
+        .content-area {
+            margin-left: 0;
+            padding: 1rem;
+        }
+        
+        .sidebar-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+            display: none;
+        }
+        
+        .sidebar-overlay.show {
+            display: block;
+        }
+        
+        .navbar .container-fluid {
+            padding: 0 1rem;
+        }
+        
+        .theme-toggle {
+            margin-right: 0.5rem;
+        }
+    }
+    
+    /* Tooltips mejorados para sidebar colapsado */
+    .sidebar.collapsed .nav-link {
+        position: relative;
+    }
+    
+    .sidebar.collapsed .nav-link:hover::after {
+        content: attr(data-tooltip);
+        position: absolute;
+        left: 100%;
+        top: 50%;
+        transform: translateY(-50%);
+        background: var(--sidebar-bg);
+        color: var(--text-color);
+        padding: 0.5rem 0.75rem;
+        border-radius: 4px;
+        font-size: 0.875rem;
+        font-weight: 500;
+        white-space: nowrap;
+        z-index: 1000;
+        margin-left: 0.5rem;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        pointer-events: none;
+        border: 1px solid var(--border-color);
+    }
+    
+    .sidebar.collapsed .nav-link:hover::before {
+        content: '';
+        position: absolute;
+        left: 100%;
+        top: 50%;
+        transform: translateY(-50%);
+        border: 5px solid transparent;
+        border-right-color: var(--sidebar-bg);
+        margin-left: -0.25rem;
+        z-index: 1000;
+        pointer-events: none;
+    }
+    
+    /* Botón móvil para abrir sidebar */
+    .mobile-sidebar-toggle {
+        display: none;
+        background: none;
+        border: none;
+        color: var(--neutral-light);
+        font-size: 1.5rem;
+        padding: 0.5rem;
+        border-radius: 4px;
+        transition: all 0.3s ease;
+    }
+    
+    .mobile-sidebar-toggle:hover {
+        background: rgba(255, 255, 255, 0.1);
+    }
+    
+    @media (max-width: 768px) {
+        .mobile-sidebar-toggle {
+            display: block;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="technician-container">
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg">
+        <div class="container-fluid">
+            <!-- Botón móvil para sidebar -->
+            <button class="mobile-sidebar-toggle d-lg-none" id="mobileSidebarToggle">
+                <i class="bi bi-list"></i>
+            </button>
+            
+            <a class="navbar-brand" href="{% url 'CPdashtechnician:dashboard' %}">
+                <i class="bi bi-tools"></i> Panel Técnico
+            </a>
+            
+            <div class="navbar-nav ms-auto d-flex align-items-center">
+                <!-- Botón de tema -->
+                <button class="theme-toggle" onclick="toggleTheme()" title="Cambiar tema">
+                    <i class="bi bi-sun-fill" id="lightIcon" style="display: inline;"></i>
+                    <i class="bi bi-moon-fill" id="darkIcon" style="display: none;"></i>
+                </button>
+                
+                <div class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" role="button" data-bs-toggle="dropdown">
+                        {% if user.avatar %}
+                            <img src="{{ user.avatar.url }}" alt="Avatar" class="user-avatar me-2">
+                        {% else %}
+                            <i class="bi bi-person-circle user-avatar me-2"></i>
+                        {% endif %}
+                        <span>{{ user.get_full_name|default:user.username }}</span>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item" href="{% url 'CPdashtechnician:profile' %}">
+                            <i class="bi bi-person"></i> Mi Perfil
+                        </a></li>
+                        <li><a class="dropdown-item" href="{% url 'CPlogin:change_password' %}">
+                            <i class="bi bi-key"></i> Cambiar Contraseña
+                        </a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="{% url 'CPlogin:logout' %}">
+                            <i class="bi bi-box-arrow-right"></i> Cerrar Sesión
+                        </a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="technicianSidebar">
+            <div class="sidebar-header">
+                <h5 class="sidebar-title">
+                    <i class="bi bi-tools"></i>
+                    <span class="sidebar-text">Técnico</span>
+                </h5>
+                <button class="toggle-btn" id="sidebarToggle" title="Colapsar/Expandir sidebar">
+                    <i class="bi bi-chevron-left"></i>
+                </button>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <!-- Dashboard -->
+                <div class="nav-section">
+                    <div class="nav-section-title">Principal</div>
+                    <div class="nav-item">
+                        <a href="{% url 'CPdashtechnician:dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}" data-tooltip="Dashboard">
+                            <i class="bi bi-speedometer2 nav-icon"></i>
+                            <span class="nav-text">Dashboard</span>
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- Tickets -->
+                <div class="nav-section">
+                    <div class="nav-section-title">Gestión de Tickets</div>
+                    <div class="nav-item">
+                        <a href="{% url 'CPdashtechnician:my_tickets' %}" class="nav-link {% if request.resolver_match.url_name == 'my_tickets' %}active{% endif %}" data-tooltip="Mis Tickets">
+                            <i class="bi bi-ticket-detailed nav-icon"></i>
+                            <span class="nav-text">Mis Tickets</span>
+                        </a>
+                    </div>
+                    <div class="nav-item">
+                        <a href="#" class="nav-link" data-tooltip="Tickets Asignados">
+                            <i class="bi bi-person-check nav-icon"></i>
+                            <span class="nav-text">Asignados</span>
+                        </a>
+                    </div>
+                    <div class="nav-item">
+                        <a href="#" class="nav-link" data-tooltip="Tickets Pendientes">
+                            <i class="bi bi-clock-history nav-icon"></i>
+                            <span class="nav-text">Pendientes</span>
+                        </a>
+                    </div>
+                    <div class="nav-item">
+                        <a href="#" class="nav-link" data-tooltip="Tickets Completados">
+                            <i class="bi bi-check-circle nav-icon"></i>
+                            <span class="nav-text">Completados</span>
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- Reportes -->
+                <div class="nav-section">
+                    <div class="nav-section-title">Reportes</div>
+                    <div class="nav-item">
+                        <a href="#" class="nav-link" data-tooltip="Reportes de Trabajo">
+                            <i class="bi bi-graph-up nav-icon"></i>
+                            <span class="nav-text">Reportes</span>
+                        </a>
+                    </div>
+                    <div class="nav-item">
+                        <a href="#" class="nav-link" data-tooltip="Estadísticas">
+                            <i class="bi bi-bar-chart nav-icon"></i>
+                            <span class="nav-text">Estadísticas</span>
+                        </a>
+                    </div>
+                    <div class="nav-item">
+                        <a href="#" class="nav-link" data-tooltip="Productividad">
+                            <i class="bi bi-activity nav-icon"></i>
+                            <span class="nav-text">Productividad</span>
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- Configuración -->
+                <div class="nav-section">
+                    <div class="nav-section-title">Configuración</div>
+                    <div class="nav-item">
+                        <a href="{% url 'CPdashtechnician:profile' %}" class="nav-link {% if request.resolver_match.url_name == 'profile' %}active{% endif %}" data-tooltip="Mi Perfil">
+                            <i class="bi bi-person-circle nav-icon"></i>
+                            <span class="nav-text">Mi Perfil</span>
+                        </a>
+                    </div>
+                    <div class="nav-item">
+                        <a href="{% url 'CPlogin:change_password' %}" class="nav-link" data-tooltip="Cambiar Contraseña">
+                            <i class="bi bi-key nav-icon"></i>
+                            <span class="nav-text">Contraseña</span>
+                        </a>
+                    </div>
+                    <div class="nav-item">
+                        <a href="#" class="nav-link" data-tooltip="Configuración">
+                            <i class="bi bi-gear nav-icon"></i>
+                            <span class="nav-text">Configuración</span>
+                        </a>
+                    </div>
+                </div>
+            </nav>
+        </aside>
+        
+        <!-- Content Area -->
+        <div class="content-area">
+            <!-- Breadcrumb -->
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item">
+                        <a href="{% url 'CPdashtechnician:dashboard' %}">
+                            <i class="bi bi-house"></i> Inicio
+                        </a>
+                    </li>
+                    {% block breadcrumb %}{% endblock %}
+                </ol>
+            </nav>
+            
+            <!-- Content Header -->
+            <div class="content-header">
+                <h1 class="content-title">{% block content_title %}Dashboard{% endblock %}</h1>
+                <p class="content-subtitle">{% block content_subtitle %}{% endblock %}</p>
+            </div>
+            
+            <!-- Main Content -->
+            {% block technician_content %}{% endblock %}
+        </div>
+    </div>
+</div>
+
+<!-- Mobile Sidebar Overlay -->
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const sidebar = document.getElementById('technicianSidebar');
+    const sidebarToggle = document.getElementById('sidebarToggle');
+    const mobileSidebarToggle = document.getElementById('mobileSidebarToggle');
+    const sidebarOverlay = document.getElementById('sidebarOverlay');
+    
+    // Toggle sidebar desktop
+    sidebarToggle.addEventListener('click', function() {
+        sidebar.classList.toggle('collapsed');
+        
+        // Save state to localStorage
+        localStorage.setItem('technicianSidebarCollapsed', sidebar.classList.contains('collapsed'));
+        
+        // Update toggle button icon
+        const icon = this.querySelector('i');
+        if (sidebar.classList.contains('collapsed')) {
+            icon.className = 'bi bi-chevron-right';
+        } else {
+            icon.className = 'bi bi-chevron-left';
+        }
+    });
+    
+    // Toggle sidebar móvil
+    if (mobileSidebarToggle) {
+        mobileSidebarToggle.addEventListener('click', function() {
+            sidebar.classList.toggle('show');
+            sidebarOverlay.classList.toggle('show');
+        });
+    }
+    
+    // Close mobile sidebar when clicking overlay
+    sidebarOverlay.addEventListener('click', function() {
+        sidebar.classList.remove('show');
+        sidebarOverlay.classList.remove('show');
+    });
+    
+    // Load sidebar state from localStorage
+    const sidebarCollapsed = localStorage.getItem('technicianSidebarCollapsed') === 'true';
+    if (sidebarCollapsed) {
+        sidebar.classList.add('collapsed');
+        const icon = sidebarToggle.querySelector('i');
+        icon.className = 'bi bi-chevron-right';
+    }
+    
+    // Handle window resize
+    window.addEventListener('resize', function() {
+        if (window.innerWidth > 768) {
+            sidebar.classList.remove('show');
+            sidebarOverlay.classList.remove('show');
+        }
+    });
+    
+    // Actualizar iconos de tema según el tema actual
+    function updateThemeIcons() {
+        const currentTheme = document.documentElement.getAttribute('data-bs-theme');
+        const lightIcon = document.getElementById('lightIcon');
+        const darkIcon = document.getElementById('darkIcon');
+        
+        if (lightIcon && darkIcon) {
+            lightIcon.style.display = currentTheme === 'light' ? 'inline' : 'none';
+            darkIcon.style.display = currentTheme === 'dark' ? 'inline' : 'none';
+        }
+    }
+    
+    // Actualizar iconos al cargar
+    updateThemeIcons();
+    
+    // Observar cambios en el tema
+    const observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+            if (mutation.type === 'attributes' && mutation.attributeName === 'data-bs-theme') {
+                updateThemeIcons();
+            }
+        });
+    });
+    
+    observer.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ['data-bs-theme']
+    });
+});
+</script>
+{% endblock %}

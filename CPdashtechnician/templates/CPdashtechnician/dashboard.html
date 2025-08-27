@@ -1,46 +1,260 @@
-{% extends 'base.html' %}
+{% extends 'CPdashtechnician/base_technician.html' %}
 
-{% block title %}Dashboard Técnico - ServiceNow Cerro Verde{% endblock %}
+{% block technician_title %}Dashboard{% endblock %}
+
+{% block content_title %}Dashboard del Técnico{% endblock %}
+{% block content_subtitle %}Bienvenido al panel de control técnico{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item active">Dashboard</li>
+{% endblock %}
+
+{% block technician_content %}
+<!-- Welcome Card -->
+<div class="welcome-card mb-4">
+    <div class="welcome-header">
+        {% if user.avatar %}
+            <img src="{{ user.avatar.url }}" alt="Avatar" class="welcome-avatar">
+        {% else %}
+            <div class="welcome-avatar d-flex align-items-center justify-content-center bg-primary text-white">
+                <i class="bi bi-person" style="font-size: 2rem;"></i>
+            </div>
+        {% endif %}
+        <div class="welcome-info">
+            <h2>¡Bienvenido, {{ user.get_full_name|default:user.username }}!</h2>
+            <p>Técnico de {{ user.company.name }}</p>
+            <p class="text-muted">Último acceso: {{ user.last_login|date:"d/m/Y H:i"|default:"Primera vez" }}</p>
+        </div>
+    </div>
+</div>
+
+<!-- Stats Grid -->
+<div class="stats-grid mb-4">
+    <div class="stat-card">
+        <div class="stat-icon">
+            <i class="bi bi-ticket-detailed"></i>
+        </div>
+        <h3 class="stat-number">{{ total_assigned }}</h3>
+        <p class="stat-label">Tickets Asignados</p>
+        <div class="stat-change positive">
+            <i class="bi bi-arrow-up"></i> Total asignados
+        </div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-icon">
+            <i class="bi bi-clock-history"></i>
+        </div>
+        <h3 class="stat-number">{{ active_tickets }}</h3>
+        <p class="stat-label">Pendientes</p>
+        <div class="stat-change {% if active_tickets > 0 %}negative{% else %}positive{% endif %}">
+            <i class="bi bi-{% if active_tickets > 0 %}exclamation{% else %}check{% endif %}"></i> 
+            {% if active_tickets > 0 %}{{ active_tickets }} activos{% else %}Sin pendientes{% endif %}
+        </div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-icon">
+            <i class="bi bi-check-circle"></i>
+        </div>
+        <h3 class="stat-number">{{ completed_tickets }}</h3>
+        <p class="stat-label">Completados</p>
+        <div class="stat-change positive">
+            <i class="bi bi-arrow-up"></i> {{ completed_tickets }} resueltos
+        </div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-icon">
+            <i class="bi bi-graph-up"></i>
+        </div>
+        <h3 class="stat-number">{{ satisfaction_rate }}%</h3>
+        <p class="stat-label">Satisfacción</p>
+        <div class="stat-change positive">
+            <i class="bi bi-arrow-up"></i> Tasa de éxito
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-lightning"></i> Acciones Rápidas
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-6 mb-3">
+                        <a href="{% url 'CPdashtechnician:my_tickets' %}" class="btn btn-outline-primary w-100">
+                            <i class="bi bi-ticket-detailed"></i>
+                            <br>Ver Mis Tickets
+                        </a>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <a href="{% url 'CPdashtechnician:reports' %}" class="btn btn-outline-success w-100">
+                            <i class="bi bi-graph-up"></i>
+                            <br>Ver Reportes
+                        </a>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <a href="{% url 'CPdashtechnician:profile' %}" class="btn btn-outline-info w-100">
+                            <i class="bi bi-person"></i>
+                            <br>Mi Perfil
+                        </a>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <a href="{% url 'CPlogin:change_password' %}" class="btn btn-outline-warning w-100">
+                            <i class="bi bi-key"></i>
+                            <br>Cambiar Contraseña
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-bell"></i> Notificaciones Recientes
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="notification-list">
+                    {% if assigned_tickets %}
+                        {% for ticket in assigned_tickets|slice:":3" %}
+                            <div class="notification-item">
+                                <div class="notification-icon {% if ticket.status == 'open' %}bg-primary{% elif ticket.status == 'in_progress' %}bg-warning{% else %}bg-success{% endif %}">
+                                    <i class="bi bi-ticket-detailed"></i>
+                                </div>
+                                <div class="notification-content">
+                                    <h6>Ticket #{{ ticket.id }} - {{ ticket.title|truncatechars:30 }}</h6>
+                                    <p>Estado: {{ ticket.get_status_display }}</p>
+                                    <small class="text-muted">{{ ticket.created_at|timesince }} atrás</small>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center text-muted py-3">
+                            <i class="bi bi-inbox" style="font-size: 2rem;"></i>
+                            <p class="mt-2">No tienes tickets asignados actualmente</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Tickets -->
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="card-title mb-0">
+            <i class="bi bi-clock-history"></i> Tickets Recientes
+        </h5>
+        <a href="{% url 'CPdashtechnician:my_tickets' %}" class="btn btn-sm btn-outline-primary">
+            Ver Todos
+        </a>
+    </div>
+    <div class="card-body">
+        {% if recent_tickets %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Título</th>
+                            <th>Categoría</th>
+                            <th>Estado</th>
+                            <th>Prioridad</th>
+                            <th>Fecha</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for ticket in recent_tickets %}
+                            <tr>
+                                <td>#{{ ticket.id }}</td>
+                                <td>
+                                    <div class="ticket-title">
+                                        {{ ticket.title|truncatechars:40 }}
+                                        {% if ticket.description %}
+                                            <div class="ticket-description text-muted small">
+                                                {{ ticket.description|truncatechars:50 }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                                <td>
+                                    {% if ticket.category %}
+                                        <span class="badge bg-info">{{ ticket.category.name }}</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">Sin categoría</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if ticket.status == 'open' %}
+                                        <span class="badge bg-primary">Abierto</span>
+                                    {% elif ticket.status == 'in_progress' %}
+                                        <span class="badge bg-warning">En Proceso</span>
+                                    {% elif ticket.status == 'closed' %}
+                                        <span class="badge bg-success">Completado</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">{{ ticket.get_status_display }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if ticket.priority == 'low' %}
+                                        <span class="badge bg-info">Baja</span>
+                                    {% elif ticket.priority == 'medium' %}
+                                        <span class="badge bg-warning">Media</span>
+                                    {% elif ticket.priority == 'high' %}
+                                        <span class="badge bg-danger">Alta</span>
+                                    {% elif ticket.priority == 'urgent' %}
+                                        <span class="badge bg-dark">Urgente</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">{{ ticket.get_priority_display }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ ticket.created_at|date:"d/m/Y" }}</td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <a href="{% url 'CPdashtechnician:ticket_detail' ticket.id %}" class="btn btn-sm btn-outline-primary" title="Ver Detalles">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        {% if ticket.status != 'closed' %}
+                                            <button class="btn btn-sm btn-outline-success" title="Marcar Completado">
+                                                <i class="bi bi-check-lg"></i>
+                                            </button>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="text-center text-muted py-4">
+                <i class="bi bi-inbox" style="font-size: 3rem;"></i>
+                <h5 class="mt-3">No tienes tickets asignados</h5>
+                <p>Cuando te asignen tickets, aparecerán aquí para que puedas gestionarlos.</p>
+                <a href="{% url 'CPdashtechnician:my_tickets' %}" class="btn btn-primary">
+                    <i class="bi bi-ticket-detailed"></i> Ver Todos los Tickets
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
 
 {% block extra_css %}
+{{ block.super }}
 <style>
-    .technician-container {
-        min-height: 100vh;
-        background: var(--neutral-gray);
-    }
-    
-    .navbar {
-        background: var(--primary-dark);
-        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    }
-    
-    .navbar-brand {
-        color: var(--neutral-light) !important;
-        font-weight: bold;
-        font-size: 1.2rem;
-    }
-    
-    .navbar-nav .nav-link {
-        color: var(--neutral-light) !important;
-        transition: color 0.3s ease;
-    }
-    
-    .navbar-nav .nav-link:hover {
-        color: var(--primary-light) !important;
-    }
-    
-    .user-avatar {
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-        border: 2px solid var(--primary-light);
-        object-fit: cover;
-    }
-    
-    .main-content {
-        padding: 2rem;
-    }
-    
     .welcome-card {
         background: var(--neutral-light);
         border-radius: 15px;
@@ -101,7 +315,7 @@
     }
     
     .stat-number {
-        font-size: 2rem;
+        font-size: 2.5rem;
         font-weight: bold;
         color: var(--primary-dark);
         margin-bottom: 0.5rem;
@@ -109,340 +323,115 @@
     
     .stat-label {
         color: var(--neutral-gray);
-        font-size: 0.9rem;
+        font-size: 1rem;
+        margin-bottom: 0.5rem;
     }
     
-    .tickets-section {
+    .stat-change {
+        font-size: 0.875rem;
+        font-weight: 500;
+    }
+    
+    .stat-change.positive {
+        color: var(--accent-green);
+    }
+    
+    .stat-change.negative {
+        color: #dc3545;
+    }
+    
+    .card {
         background: var(--neutral-light);
-        border-radius: 15px;
-        padding: 2rem;
-        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        border: 1px solid var(--border-color);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        border-radius: 10px;
     }
     
-    .tickets-section h3 {
-        color: var(--primary-dark);
-        margin-bottom: 1.5rem;
+    .card-header {
+        background: var(--primary-dark);
+        color: var(--neutral-light);
+        border-bottom: 1px solid var(--border-color);
+        border-radius: 10px 10px 0 0;
     }
     
-    .ticket-item {
+    .notification-list {
+        max-height: 300px;
+        overflow-y: auto;
+    }
+    
+    .notification-item {
         display: flex;
-        align-items: center;
-        padding: 1rem;
-        border-bottom: 1px solid var(--neutral-gray);
-        transition: background-color 0.3s ease;
+        align-items: start;
+        padding: 1rem 0;
+        border-bottom: 1px solid var(--border-color);
     }
     
-    .ticket-item:hover {
-        background-color: var(--neutral-gray);
-    }
-    
-    .ticket-item:last-child {
+    .notification-item:last-child {
         border-bottom: none;
     }
     
-    .ticket-icon {
-        width: 50px;
-        height: 50px;
+    .notification-icon {
+        width: 40px;
+        height: 40px;
         border-radius: 50%;
-        background: var(--primary-light);
-        color: var(--neutral-light);
         display: flex;
         align-items: center;
         justify-content: center;
+        color: white;
         margin-right: 1rem;
-        font-size: 1.2rem;
+        flex-shrink: 0;
     }
     
-    .ticket-info {
-        flex: 1;
+    .notification-content h6 {
+        margin: 0 0 0.25rem 0;
+        color: var(--text-color);
+    }
+    
+    .notification-content p {
+        margin: 0 0 0.25rem 0;
+        color: var(--neutral-gray);
+        font-size: 0.875rem;
+    }
+    
+    .table {
+        color: var(--text-color);
+    }
+    
+    .table th {
+        background: var(--primary-dark);
+        color: var(--neutral-light);
+        border: none;
+    }
+    
+    .table td {
+        border-color: var(--border-color);
+        vertical-align: middle;
+    }
+    
+    .badge {
+        font-size: 0.75rem;
+        padding: 0.375rem 0.75rem;
+    }
+    
+    .btn {
+        border-radius: 6px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+    
+    .btn:hover {
+        transform: translateY(-1px);
     }
     
     .ticket-title {
         font-weight: 600;
         color: var(--primary-dark);
-        margin-bottom: 0.25rem;
     }
     
-    .ticket-meta {
-        font-size: 0.8rem;
-        color: var(--neutral-gray);
-    }
-    
-    .ticket-status {
-        padding: 0.25rem 0.75rem;
-        border-radius: 15px;
-        font-size: 0.8rem;
-        font-weight: 600;
-    }
-    
-    .status-open {
-        background: #ffc107;
-        color: #000;
-    }
-    
-    .status-in_progress {
-        background: #17a2b8;
-        color: white;
-    }
-    
-    .status-closed {
-        background: #28a745;
-        color: white;
-    }
-    
-    .quick-actions {
-        background: var(--neutral-light);
-        border-radius: 15px;
-        padding: 2rem;
-        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-        margin-top: 2rem;
-    }
-    
-    .quick-actions h3 {
-        color: var(--primary-dark);
-        margin-bottom: 1.5rem;
-    }
-    
-    .action-buttons {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 1rem;
-    }
-    
-    .action-btn {
-        display: flex;
-        align-items: center;
-        padding: 1rem;
-        background: var(--primary-light);
-        color: var(--neutral-light);
-        text-decoration: none;
-        border-radius: 8px;
-        transition: all 0.3s ease;
-    }
-    
-    .action-btn:hover {
-        background: var(--primary-dark);
-        color: var(--neutral-light);
-        transform: translateY(-2px);
-    }
-    
-    .action-btn i {
-        margin-right: 0.75rem;
-        font-size: 1.2rem;
-    }
-    
-    .dropdown-menu {
-        border: none;
-        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-        border-radius: 8px;
-    }
-    
-    .dropdown-item {
-        color: var(--primary-dark);
-        transition: background-color 0.3s ease;
-    }
-    
-    .dropdown-item:hover {
-        background-color: var(--primary-light);
-        color: var(--neutral-light);
-    }
-    
-    .alert {
-        border-radius: 8px;
-        border: none;
-        padding: 1rem;
-        margin-bottom: 1.5rem;
-        font-size: 0.9rem;
-    }
-    
-    .alert-success {
-        background: var(--accent-green);
-        color: var(--neutral-light);
-    }
-    
-    .alert-danger {
-        background: #dc3545;
-        color: var(--neutral-light);
+    .ticket-description {
+        margin-top: 0.25rem;
+        font-size: 0.875rem;
     }
 </style>
 {% endblock %}
 
-{% block content %}
-<div class="technician-container">
-    <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg">
-        <div class="container">
-            <a class="navbar-brand" href="{% url 'CPdashtechnician:dashboard' %}">
-                {% if company.logo %}
-                    <img src="{{ company.logo.url }}" alt="Logo" style="height: 30px; margin-right: 10px;">
-                {% endif %}
-                Panel Técnico
-            </a>
-            
-            <div class="navbar-nav ms-auto">
-                <div class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" role="button" data-bs-toggle="dropdown">
-                        {% if user.avatar %}
-                            <img src="{{ user.avatar.url }}" alt="Avatar" class="user-avatar me-2">
-                        {% else %}
-                            <div class="user-avatar me-2 d-flex align-items-center justify-content-center" style="background: var(--primary-light); color: var(--neutral-light);">
-                                {{ user.first_name|first|upper }}{{ user.last_name|first|upper }}
-                            </div>
-                        {% endif %}
-                        {{ user.get_full_name|default:user.username }}
-                    </a>
-                    <ul class="dropdown-menu">
-                        <li><a class="dropdown-item" href="{% url 'CPdashtechnician:profile' %}">
-                            <i class="fas fa-user me-2"></i>Mi Perfil
-                        </a></li>
-                        <li><a class="dropdown-item" href="{% url 'CPlogin:change_password' %}">
-                            <i class="fas fa-key me-2"></i>Cambiar Contraseña
-                        </a></li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item" href="{% url 'CPlogin:logout' %}">
-                            <i class="fas fa-sign-out-alt me-2"></i>Cerrar Sesión
-                        </a></li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-    </nav>
-    
-    <!-- Main Content -->
-    <div class="main-content">
-        <div class="container">
-            <!-- Mensajes -->
-            {% if messages %}
-                {% for message in messages %}
-                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                        {{ message }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                    </div>
-                {% endfor %}
-            {% endif %}
-            
-            <!-- Welcome Card -->
-            <div class="welcome-card">
-                <div class="welcome-header">
-                    {% if user.avatar %}
-                        <img src="{{ user.avatar.url }}" alt="Avatar" class="welcome-avatar">
-                    {% else %}
-                        <div class="welcome-avatar d-flex align-items-center justify-content-center" style="background: var(--primary-light); color: var(--neutral-light); font-size: 2rem;">
-                            {{ user.first_name|first|upper }}{{ user.last_name|first|upper }}
-                        </div>
-                    {% endif %}
-                    <div class="welcome-info">
-                        <h2>¡Bienvenido, {{ user.get_full_name|default:user.username }}!</h2>
-                        <p>{{ user.title|default:"Técnico" }} - {{ user.department|default:"Sin departamento" }}</p>
-                        <p><small class="text-muted">Último acceso: {{ current_time|date:"d/m/Y H:i" }}</small></p>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Stats Grid -->
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-icon">
-                        <i class="fas fa-ticket-alt"></i>
-                    </div>
-                    <div class="stat-number">{{ total_assigned }}</div>
-                    <div class="stat-label">Total Asignados</div>
-                </div>
-                
-                <div class="stat-card">
-                    <div class="stat-icon">
-                        <i class="fas fa-clock"></i>
-                    </div>
-                    <div class="stat-number">{{ active_tickets }}</div>
-                    <div class="stat-label">Tickets Activos</div>
-                </div>
-                
-                <div class="stat-card">
-                    <div class="stat-icon">
-                        <i class="fas fa-check-circle"></i>
-                    </div>
-                    <div class="stat-number">{{ completed_tickets }}</div>
-                    <div class="stat-label">Completados</div>
-                </div>
-                
-                <div class="stat-card">
-                    <div class="stat-icon">
-                        <i class="fas fa-chart-line"></i>
-                    </div>
-                    <div class="stat-number">
-                        {% if total_assigned > 0 %}
-                            {{ completed_tickets|floatformat:0 }}%
-                        {% else %}
-                            0%
-                        {% endif %}
-                    </div>
-                    <div class="stat-label">Tasa de Completado</div>
-                </div>
-            </div>
-            
-            <!-- Tickets Section -->
-            <div class="tickets-section">
-                <h3>Tickets Asignados Recientes</h3>
-                {% for ticket in assigned_tickets %}
-                    <div class="ticket-item">
-                        <div class="ticket-icon">
-                            <i class="fas fa-ticket-alt"></i>
-                        </div>
-                        <div class="ticket-info">
-                            <div class="ticket-title">{{ ticket.title }}</div>
-                            <div class="ticket-meta">
-                                Creado por: {{ ticket.created_by.get_full_name|default:ticket.created_by.username }} | 
-                                {{ ticket.created_at|date:"d/m/Y H:i" }} | 
-                                Prioridad: {{ ticket.get_priority_display }}
-                            </div>
-                        </div>
-                        <span class="ticket-status status-{{ ticket.status }}">
-                            {{ ticket.get_status_display }}
-                        </span>
-                    </div>
-                {% empty %}
-                    <p class="text-muted">No tienes tickets asignados actualmente.</p>
-                {% endfor %}
-            </div>
-            
-            <!-- Quick Actions -->
-            <div class="quick-actions">
-                <h3>Acciones Rápidas</h3>
-                <div class="action-buttons">
-                    <a href="{% url 'CPdashtechnician:my_tickets' %}" class="action-btn">
-                        <i class="fas fa-list"></i>
-                        Ver Mis Tickets
-                    </a>
-                    <a href="{% url 'CPdashtechnician:profile' %}" class="action-btn">
-                        <i class="fas fa-user"></i>
-                        Mi Perfil
-                    </a>
-                    <a href="{% url 'CPlogin:change_password' %}" class="action-btn">
-                        <i class="fas fa-key"></i>
-                        Cambiar Contraseña
-                    </a>
-                    <a href="#" class="action-btn">
-                        <i class="fas fa-question-circle"></i>
-                        Ayuda
-                    </a>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-{% endblock %}
-
-{% block extra_js %}
-<script>
-// Auto-hide alerts after 5 seconds
-document.addEventListener('DOMContentLoaded', function() {
-    const alerts = document.querySelectorAll('.alert');
-    alerts.forEach(function(alert) {
-        setTimeout(function() {
-            const bsAlert = new bootstrap.Alert(alert);
-            bsAlert.close();
-        }, 5000);
-    });
-});
-</script>
-{% endblock %}
