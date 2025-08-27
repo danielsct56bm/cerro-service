@@ -132,24 +132,31 @@ def change_password(request):
         new_password = request.POST.get('new_password')
         confirm_password = request.POST.get('confirm_password')
         
+        # Preparar contexto para errores
+        context = {
+            'user': request.user,
+            'company': request.user.company if hasattr(request.user, 'company') else None,
+        }
+        
+        # Verificar que todos los campos estén completos
         if not current_password or not new_password or not confirm_password:
             messages.error(request, "Por favor complete todos los campos.")
-            return render(request, 'CPlogin/change_password.html')
+            return render(request, 'CPlogin/change_password.html', context)
         
         # Verificar contraseña actual
         if not request.user.check_password(current_password):
             messages.error(request, "La contraseña actual es incorrecta.")
-            return render(request, 'CPlogin/change_password.html')
+            return render(request, 'CPlogin/change_password.html', context)
         
         # Verificar que las nuevas contraseñas coincidan
         if new_password != confirm_password:
             messages.error(request, "Las nuevas contraseñas no coinciden.")
-            return render(request, 'CPlogin/change_password.html')
+            return render(request, 'CPlogin/change_password.html', context)
         
         # Verificar fortaleza de la contraseña
         if len(new_password) < 8:
             messages.error(request, "La nueva contraseña debe tener al menos 8 caracteres.")
-            return render(request, 'CPlogin/change_password.html')
+            return render(request, 'CPlogin/change_password.html', context)
         
         # Cambiar contraseña
         request.user.set_password(new_password)
@@ -164,7 +171,12 @@ def change_password(request):
         messages.success(request, "Contraseña cambiada exitosamente.")
         return redirect_user_by_role(user)
     
-    return render(request, 'CPlogin/change_password.html')
+    # Pasar información del usuario al contexto
+    context = {
+        'user': request.user,
+        'company': request.user.company if hasattr(request.user, 'company') else None,
+    }
+    return render(request, 'CPlogin/change_password.html', context)
 
 
 @login_required
