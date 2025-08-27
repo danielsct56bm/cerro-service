@@ -134,6 +134,34 @@
         * {
             transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
         }
+        
+        /* Estilos para botones de mostrar/ocultar contraseña */
+        .password-toggle {
+            background: none;
+            border: none;
+            color: var(--text-color);
+            padding: 0.375rem 0.75rem;
+            border-left: 1px solid var(--border-color);
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+        
+        .password-toggle:hover {
+            color: var(--primary-light);
+        }
+        
+        .password-toggle:focus {
+            outline: none;
+            box-shadow: none;
+        }
+        
+        .input-group .password-toggle {
+            border-radius: 0 0.375rem 0.375rem 0;
+        }
+        
+        .input-group .form-control:not(:last-child) {
+            border-radius: 0.375rem 0 0 0.375rem;
+        }
     </style>
     
     {% block extra_css %}{% endblock %}
@@ -182,6 +210,20 @@
                 }
             };
         });
+        
+        // Función global para mostrar/ocultar contraseña
+        window.togglePassword = function(fieldId) {
+            const passwordInput = document.getElementById(fieldId);
+            const passwordIcon = document.getElementById(fieldId + '_icon');
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                passwordIcon.className = 'bi bi-eye-slash';
+            } else {
+                passwordInput.type = 'password';
+                passwordIcon.className = 'bi bi-eye';
+            }
+        };
     </script>
     
     {% block extra_js %}{% endblock %}

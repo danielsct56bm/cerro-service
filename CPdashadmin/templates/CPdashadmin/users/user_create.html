@@ -63,13 +63,23 @@
                             
                             <div class="mb-3">
                                 <label for="password" class="form-label">Contraseña *</label>
-                                <input type="password" class="form-control" id="password" name="password" required>
+                                <div class="input-group">
+                                    <input type="password" class="form-control" id="password" name="password" required>
+                                    <button type="button" class="password-toggle" onclick="togglePassword('password')">
+                                        <i class="bi bi-eye" id="password_icon"></i>
+                                    </button>
+                                </div>
                                 <div class="form-text">Mínimo 8 caracteres</div>
                             </div>
                             
                             <div class="mb-3">
                                 <label for="confirm_password" class="form-label">Confirmar Contraseña *</label>
-                                <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
+                                <div class="input-group">
+                                    <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
+                                    <button type="button" class="password-toggle" onclick="togglePassword('confirm_password')">
+                                        <i class="bi bi-eye" id="confirm_password_icon"></i>
+                                    </button>
+                                </div>
                             </div>
                             
                             <div class="mb-3">

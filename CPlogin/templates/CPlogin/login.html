@@ -228,8 +228,8 @@
             <div class="input-group">
                 <input type="password" class="form-control" id="password" name="password" required 
                        placeholder="Ingrese su contraseña" autocomplete="current-password">
-                <button type="button" class="password-toggle" onclick="togglePassword()">
-                    <i class="fas fa-eye" id="password-icon"></i>
+                <button type="button" class="password-toggle" onclick="togglePassword('password')">
+                    <i class="bi bi-eye" id="password_icon"></i>
                 </button>
             </div>
         </div>
@@ -257,18 +257,7 @@
 
 {% block extra_js %}
 <script>
-function togglePassword() {
-    const passwordInput = document.getElementById('password');
-    const passwordIcon = document.getElementById('password-icon');
-    
-    if (passwordInput.type === 'password') {
-        passwordInput.type = 'text';
-        passwordIcon.className = 'fas fa-eye-slash';
-    } else {
-        passwordInput.type = 'password';
-        passwordIcon.className = 'fas fa-eye';
-    }
-}
+// La función togglePassword ahora está disponible globalmente desde base.html
 
 // Mostrar loading al enviar el formulario
 document.getElementById('login-form').addEventListener('submit', function() {
