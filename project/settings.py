@@ -14,7 +14,7 @@ SECRET_KEY = 'django-insecure-dcir0)qau+i*i(czh73lr0&xn)srxx)l1q(4j_vx@=m*2*pa-l
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1']
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', '46.202.147.12']
 
 
 # Application definition
@@ -255,7 +255,7 @@ CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:8000",
     "http://localhost:60513",
     "http://127.0.0.1:60513",
-    "https://cerro-service.onrender.com",
+    "http://46.202.147.12:8000",
 ]
 
 CORS_ALLOW_CREDENTIALS = True
