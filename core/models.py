@@ -220,8 +220,11 @@ class TicketCategory(models.Model):
     description = models.TextField(blank=True)
     icon = models.CharField(max_length=50, blank=True)
     color = models.CharField(max_length=10, blank=True)
+    background_image = models.ImageField(upload_to='category_backgrounds/', blank=True, null=True, verbose_name="Imagen de Fondo")
     is_active = models.BooleanField(default=True)
     template = models.ForeignKey(TicketTemplate, on_delete=models.SET_NULL, null=True, blank=True)
+    created_at = models.DateTimeField(default=timezone.now)
+    updated_at = models.DateTimeField(auto_now=True)
     
     class Meta:
         db_table = 'ticket_categories'
@@ -236,9 +239,13 @@ class TicketSubcategory(models.Model):
     """Subcategorías de tickets"""
     category = models.ForeignKey(TicketCategory, on_delete=models.CASCADE, related_name='subcategories')
     name = models.CharField(max_length=100)
+    description = models.TextField(blank=True)
     icon = models.CharField(max_length=50, blank=True)
     color = models.CharField(max_length=10, blank=True)
+    background_image = models.ImageField(upload_to='subcategory_backgrounds/', blank=True, null=True, verbose_name="Imagen de Fondo")
     is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(default=timezone.now)
+    updated_at = models.DateTimeField(auto_now=True)
     
     class Meta:
         db_table = 'ticket_subcategories'
@@ -287,7 +294,7 @@ class Ticket(models.Model):
     requester = models.ForeignKey(User, on_delete=models.CASCADE, related_name='requested_tickets')
     assigned_to = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='assigned_tickets')
     category = models.ForeignKey(TicketCategory, on_delete=models.CASCADE, related_name='tickets')
-    subcategory = models.ForeignKey(TicketSubcategory, on_delete=models.SET_NULL, null=True, blank=True)
+    subcategory = models.ForeignKey(TicketSubcategory, on_delete=models.SET_NULL, null=True, blank=True, related_name='tickets')
     template = models.ForeignKey(TicketTemplate, on_delete=models.SET_NULL, null=True, blank=True)
     form_data = models.TextField(blank=True, help_text='Datos del formulario en JSON')
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='open')

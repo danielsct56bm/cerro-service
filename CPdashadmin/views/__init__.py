@@ -11,13 +11,15 @@ from .permissions import (
     permission_management, permission_create, permission_edit, permission_delete
 )
 from .services import (
-    ticket_management, create_ticket, get_subcategories, 
-    ticket_categories_management, create_ticket_category, 
-    create_ticket_subcategory, create_ticket_template,
+    ticket_management, ticket_categories_management,
     view_ticket_category, edit_ticket_category, delete_ticket_category,
     manage_category_templates,
+    view_ticket_subcategory, edit_ticket_subcategory, delete_ticket_subcategory,
+    subcategories_management,
     kiosk_management, display_management,
     system_settings, reports,
+    create_ticket_category, create_ticket_subcategory, create_ticket_template, create_ticket,
+    get_subcategories,
     save_network_settings, save_kiosk_settings, save_general_settings, detect_local_ip
 )
 
@@ -34,5 +36,7 @@ __all__ = [
     'manage_category_templates',
     'kiosk_management', 'display_management',
     'system_settings', 'reports',
-    'save_network_settings', 'save_kiosk_settings', 'save_general_settings', 'detect_local_ip'
+    'save_network_settings', 'save_kiosk_settings', 'save_general_settings', 'detect_local_ip',
+    'view_ticket_subcategory', 'edit_ticket_subcategory', 'delete_ticket_subcategory',
+    'subcategories_management'
 ]

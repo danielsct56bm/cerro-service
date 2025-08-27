@@ -8,13 +8,3 @@ __pycache__/
 *.pywz
 *.pyzw
 *.pyzwz
-
-logs/
-*.log
-*.log.*
-*.log.*.*
-*.log.*.*.*
-*.log.*.*.*.*
-*.log.*.*.*.*.*
-*.log.*.*.*.*.*.*
-*.log.*.*.*.*.*.*.*

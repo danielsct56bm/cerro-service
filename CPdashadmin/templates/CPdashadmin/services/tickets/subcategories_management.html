@@ -1,0 +1,559 @@
+{% extends 'CPdashadmin/base_admin.html' %}
+
+{% block admin_title %}Gestión de Subcategorías{% endblock %}
+
+{% block content_title %}Gestión de Subcategorías{% endblock %}
+{% block content_subtitle %}Administrar subcategorías de tickets{% endblock %}
+
+{% block admin_content %}
+<!-- Stats Cards -->
+<div class="stats-row mb-4">
+    <div class="row">
+        <div class="col-md-3">
+            <div class="stat-card-small">
+                <div class="stat-icon-small">
+                    <i class="bi bi-tags"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-number">{{ total_subcategories }}</div>
+                    <div class="stat-label">Total Subcategorías</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card-small">
+                <div class="stat-icon-small">
+                    <i class="bi bi-check-circle"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-number">{{ active_subcategories }}</div>
+                    <div class="stat-label">Subcategorías Activas</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card-small">
+                <div class="stat-icon-small">
+                    <i class="bi bi-folder"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-number">{{ total_categories }}</div>
+                    <div class="stat-label">Categorías Padre</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card-small">
+                <div class="stat-icon-small">
+                    <i class="bi bi-ticket"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-number">{{ total_tickets }}</div>
+                    <div class="stat-label">Tickets Asociados</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Action Buttons -->
+<div class="action-buttons mb-4">
+    <div class="row">
+        <div class="col-md-4">
+            <a href="{% url 'CPdashadmin:create_ticket_subcategory' %}" class="btn btn-primary w-100 action-btn">
+                <i class="bi bi-plus-circle me-2"></i>Nueva Subcategoría
+            </a>
+        </div>
+        <div class="col-md-4">
+            <a href="{% url 'CPdashadmin:ticket_categories_management' %}" class="btn btn-secondary w-100 action-btn">
+                <i class="bi bi-folder me-2"></i>Gestionar Categorías
+            </a>
+        </div>
+        <div class="col-md-4">
+            <a href="{% url 'CPdashadmin:ticket_management' %}" class="btn btn-info w-100 action-btn">
+                <i class="bi bi-ticket-detailed me-2"></i>Ver Tickets
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Search and Filters -->
+<div class="filters-section mb-4">
+    <div class="row">
+        <div class="col-md-4">
+            <div class="input-group">
+                <span class="input-group-text">
+                    <i class="bi bi-search"></i>
+                </span>
+                <input type="text" class="form-control" id="searchSubcategories" placeholder="Buscar subcategorías..." value="{{ search }}">
+                <button class="btn btn-primary" type="button" onclick="searchSubcategories()">
+                    <i class="bi bi-search"></i>
+                </button>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <select class="form-select" id="categoryFilter">
+                <option value="">Todas las categorías</option>
+                {% for category in categories %}
+                    <option value="{{ category.id }}" {% if category_filter == category.id|stringformat:"s" %}selected{% endif %}>
+                        {{ category.name }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-4">
+            <select class="form-select" id="statusFilter">
+                <option value="">Todos los estados</option>
+                <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Activas</option>
+                <option value="inactive" {% if status_filter == 'inactive' %}selected{% endif %}>Inactivas</option>
+            </select>
+        </div>
+    </div>
+</div>
+
+<!-- Subcategories Table -->
+<div class="table-responsive">
+    <table class="table table-hover">
+        <thead class="table-dark">
+            <tr>
+                <th><i class="bi bi-tag me-2"></i>Nombre</th>
+                <th><i class="bi bi-folder me-2"></i>Categoría Padre</th>
+                <th><i class="bi bi-text-paragraph me-2"></i>Descripción</th>
+                <th><i class="bi bi-image me-2"></i>Imagen</th>
+                <th><i class="bi bi-ticket me-2"></i>Tickets</th>
+                <th><i class="bi bi-toggle-on me-2"></i>Estado</th>
+                <th><i class="bi bi-calendar me-2"></i>Fecha Creación</th>
+                <th><i class="bi bi-gear me-2"></i>Acciones</th>
+            </tr>
+        </thead>
+        <tbody id="subcategoriesTableBody">
+            {% for subcategory in subcategories %}
+            <tr>
+                <td>
+                    <div class="subcategory-info">
+                        <i class="bi bi-{{ subcategory.icon }}" style="color: {{ subcategory.color }};"></i>
+                        <strong>{{ subcategory.name }}</strong>
+                    </div>
+                </td>
+                <td>
+                    <span class="badge bg-secondary">{{ subcategory.category.name }}</span>
+                </td>
+                <td>
+                    <span class="text-muted">{{ subcategory.description|default:"Sin descripción"|truncatechars:50 }}</span>
+                </td>
+                <td>
+                    {% if subcategory.background_image %}
+                        <img src="{{ subcategory.background_image.url }}" alt="Imagen de fondo" 
+                             class="img-thumbnail" style="max-width: 60px; max-height: 40px; object-fit: cover;">
+                    {% else %}
+                        <span class="text-muted">
+                            <i class="bi bi-image"></i>
+                        </span>
+                    {% endif %}
+                </td>
+                <td>
+                    <span class="badge bg-info">{{ subcategory.tickets.count }}</span>
+                </td>
+                <td>
+                    {% if subcategory.is_active %}
+                        <span class="badge bg-success">
+                            <i class="bi bi-check-circle me-1"></i>Activa
+                        </span>
+                    {% else %}
+                        <span class="badge bg-secondary">
+                            <i class="bi bi-x-circle me-1"></i>Inactiva
+                        </span>
+                    {% endif %}
+                </td>
+                <td>{{ subcategory.created_at|date:"d/m/Y H:i" }}</td>
+                <td>
+                    <div class="btn-group" role="group">
+                        <button class="btn btn-sm btn-outline-primary" onclick="viewSubcategory({{ subcategory.id }})" title="Ver detalles">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-warning" onclick="editSubcategory({{ subcategory.id }})" title="Editar">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger" onclick="deleteSubcategory({{ subcategory.id }}, '{{ subcategory.name }}')" title="Eliminar">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="8" class="text-center text-muted py-5">
+                    <div class="empty-state">
+                        <i class="bi bi-tags display-1 text-muted mb-3"></i>
+                        <h4>No hay subcategorías</h4>
+                        <p>No se encontraron subcategorías con los filtros aplicados.</p>
+                        <a href="{% url 'CPdashadmin:create_ticket_subcategory' %}" class="btn btn-primary">
+                            <i class="bi bi-plus-circle me-2"></i>Crear Primera Subcategoría
+                        </a>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Pagination -->
+{% if subcategories.has_other_pages %}
+<div class="pagination-section mt-4">
+    <nav aria-label="Navegación de subcategorías">
+        <ul class="pagination justify-content-center">
+            {% if subcategories.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page=1{% if search %}&search={{ search }}{% endif %}{% if category_filter %}&category={{ category_filter }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}">
+                        <i class="bi bi-chevron-double-left"></i>
+                    </a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ subcategories.previous_page_number }}{% if search %}&search={{ search }}{% endif %}{% if category_filter %}&category={{ category_filter }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}">
+                        <i class="bi bi-chevron-left"></i>
+                    </a>
+                </li>
+            {% endif %}
+
+            {% for num in subcategories.paginator.page_range %}
+                {% if subcategories.number == num %}
+                    <li class="page-item active">
+                        <span class="page-link">{{ num }}</span>
+                    </li>
+                {% elif num > subcategories.number|add:'-3' and num < subcategories.number|add:'3' %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ num }}{% if search %}&search={{ search }}{% endif %}{% if category_filter %}&category={{ category_filter }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}">{{ num }}</a>
+                    </li>
+                {% endif %}
+            {% endfor %}
+
+            {% if subcategories.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ subcategories.next_page_number }}{% if search %}&search={{ search }}{% endif %}{% if category_filter %}&category={{ category_filter }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}">
+                        <i class="bi bi-chevron-right"></i>
+                    </a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ subcategories.paginator.num_pages }}{% if search %}&search={{ search }}{% endif %}{% if category_filter %}&category={{ category_filter }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}">
+                        <i class="bi bi-chevron-double-right"></i>
+                    </a>
+                </li>
+            {% endif %}
+        </ul>
+    </nav>
+</div>
+{% endif %}
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-exclamation-triangle text-warning me-2"></i>
+                    Confirmar Eliminación
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>¿Estás seguro de que deseas eliminar la subcategoría <strong id="deleteSubcategoryName"></strong>?</p>
+                <p class="text-muted">Esta acción no se puede deshacer.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-danger" id="confirmDelete">
+                    <i class="bi bi-trash me-2"></i>Eliminar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<script>
+let currentDeleteSubcategoryId = null;
+
+function searchSubcategories() {
+    const search = document.getElementById('searchSubcategories').value;
+    const category = document.getElementById('categoryFilter').value;
+    const status = document.getElementById('statusFilter').value;
+    
+    let url = '{% url "CPdashadmin:subcategories_management" %}?';
+    if (search) url += `search=${encodeURIComponent(search)}&`;
+    if (category) url += `category=${category}&`;
+    if (status) url += `status=${status}&`;
+    
+    window.location.href = url;
+}
+
+function viewSubcategory(subcategoryId) {
+    window.location.href = `{% url 'CPdashadmin:view_ticket_subcategory' 0 %}`.replace('0', subcategoryId);
+}
+
+function editSubcategory(subcategoryId) {
+    window.location.href = `{% url 'CPdashadmin:edit_ticket_subcategory' 0 %}`.replace('0', subcategoryId);
+}
+
+function deleteSubcategory(subcategoryId, subcategoryName) {
+    currentDeleteSubcategoryId = subcategoryId;
+    document.getElementById('deleteSubcategoryName').textContent = subcategoryName;
+    
+    const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+    deleteModal.show();
+}
+
+// Confirmar eliminación
+document.getElementById('confirmDelete').addEventListener('click', function() {
+    if (currentDeleteSubcategoryId) {
+        fetch(`{% url 'CPdashadmin:delete_ticket_subcategory' 0 %}`.replace('0', currentDeleteSubcategoryId), {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showNotification(data.message, 'success');
+                const deleteModal = bootstrap.Modal.getInstance(document.getElementById('deleteModal'));
+                deleteModal.hide();
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1500);
+            } else {
+                showNotification('Error: ' + data.message, 'danger');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification('Error al eliminar la subcategoría', 'danger');
+        });
+    }
+});
+
+// Filtros automáticos
+document.getElementById('categoryFilter').addEventListener('change', searchSubcategories);
+document.getElementById('statusFilter').addEventListener('change', searchSubcategories);
+
+// Búsqueda en tiempo real
+document.getElementById('searchSubcategories').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        searchSubcategories();
+    }
+});
+
+function showNotification(message, type = 'info') {
+    const notification = document.createElement('div');
+    notification.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+    notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    notification.innerHTML = `
+        <i class="bi bi-${type === 'info' ? 'info-circle' : type === 'warning' ? 'exclamation-triangle' : type === 'danger' ? 'x-circle' : 'check-circle'} me-2"></i>
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.remove();
+        }
+    }, 5000);
+}
+
+// Mejorar experiencia de usuario
+document.addEventListener('DOMContentLoaded', function() {
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[title]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+    
+    const statCards = document.querySelectorAll('.stat-card-small');
+    statCards.forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-3px) scale(1.02)';
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0) scale(1)';
+        });
+    });
+});
+</script>
+{% endblock %}
+
+{% block extra_css %}
+{{ block.super }}
+<style>
+    .stats-row {
+        margin-bottom: 2rem;
+    }
+    
+    .stat-card-small {
+        background: var(--neutral-light);
+        border-radius: 15px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        display: flex;
+        align-items: center;
+        transition: all 0.3s ease;
+        border: 1px solid rgba(0,0,0,0.05);
+    }
+    
+    .stat-card-small:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    }
+    
+    .stat-icon-small {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--primary-light) 0%, var(--primary-dark) 100%);
+        color: var(--neutral-light);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 1rem;
+        font-size: 1.5rem;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    }
+    
+    .stat-content {
+        flex: 1;
+    }
+    
+    .stat-number {
+        font-size: 2rem;
+        font-weight: bold;
+        color: var(--primary-dark);
+        margin-bottom: 0.25rem;
+        line-height: 1;
+    }
+    
+    .stat-label {
+        font-size: 0.85rem;
+        color: var(--neutral-gray);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-weight: 600;
+    }
+    
+    .action-buttons {
+        background: var(--neutral-light);
+        border-radius: 15px;
+        padding: 2rem;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        border: 1px solid rgba(0,0,0,0.05);
+    }
+    
+    .action-btn {
+        border-radius: 10px;
+        padding: 0.75rem 1rem;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        border: none;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .action-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    }
+    
+    .filters-section {
+        background: var(--neutral-light);
+        border-radius: 15px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        border: 1px solid rgba(0,0,0,0.05);
+    }
+    
+    .table {
+        background: var(--neutral-light);
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        border: 1px solid rgba(0,0,0,0.05);
+    }
+    
+    .table thead th {
+        border: none;
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.8rem;
+        letter-spacing: 0.5px;
+        background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-light) 100%);
+        color: var(--neutral-light);
+        padding: 1rem;
+    }
+    
+    .table tbody tr {
+        transition: all 0.3s ease;
+        border-bottom: 1px solid rgba(0,0,0,0.05);
+    }
+    
+    .table tbody tr:hover {
+        background-color: rgba(var(--primary-light-rgb), 0.08);
+        transform: scale(1.01);
+    }
+    
+    .table tbody td {
+        padding: 1rem;
+        vertical-align: middle;
+    }
+    
+    .subcategory-info {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    
+    .subcategory-info i {
+        font-size: 1.2rem;
+    }
+    
+    .badge {
+        font-size: 0.75rem;
+        padding: 0.5rem 0.75rem;
+        border-radius: 8px;
+        font-weight: 600;
+    }
+    
+    .btn-group .btn {
+        border-radius: 6px !important;
+        margin: 0 2px;
+        padding: 0.5rem 0.75rem;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-group .btn:hover {
+        transform: translateY(-1px);
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 3rem;
+    }
+    
+    .empty-state i {
+        font-size: 4rem;
+        color: var(--neutral-gray);
+        margin-bottom: 1rem;
+    }
+    
+    .empty-state h4 {
+        color: var(--neutral-gray);
+        margin-bottom: 0.5rem;
+    }
+    
+    .empty-state p {
+        color: var(--neutral-gray);
+        font-size: 0.9rem;
+    }
+</style>
+{% endblock %}
+

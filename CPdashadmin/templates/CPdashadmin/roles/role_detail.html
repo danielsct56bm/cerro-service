@@ -1,0 +1,183 @@
+{% extends 'CPdashadmin/base_admin.html' %}
+
+{% block admin_title %}Detalle del Rol - {{ role.name }}{% endblock %}
+
+{% block content_title %}{{ role.name }}{% endblock %}
+{% block content_subtitle %}Detalles y usuarios asignados{% endblock %}
+
+{% block admin_content %}
+<div class="row">
+    <!-- Información del Rol -->
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="card-title mb-0">
+                    <i class="bi bi-shield"></i> Información del Rol
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>Nombre:</strong> {{ role.name }}</p>
+                        <p><strong>Clave:</strong> {{ role.key }}</p>
+                        <p><strong>Descripción:</strong> {{ role.description|default:"Sin descripción" }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Empresa:</strong> {{ role.company.name }}</p>
+                        <p><strong>Creado:</strong> {{ role.created_at|date:"d/m/Y H:i" }}</p>
+                        <p><strong>Actualizado:</strong> {{ role.updated_at|date:"d/m/Y H:i" }}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer">
+                <div class="btn-group">
+                    <a href="{% url 'CPdashadmin:role_edit' role.id %}" class="btn btn-warning">
+                        <i class="bi bi-pencil"></i> Editar
+                    </a>
+                    <a href="{% url 'CPdashadmin:role_delete' role.id %}" class="btn btn-danger">
+                        <i class="bi bi-trash"></i> Eliminar
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Estadísticas -->
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="card-title mb-0">
+                    <i class="bi bi-graph-up"></i> Estadísticas
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="text-center mb-3">
+                    <h3 class="text-primary">{{ users_with_role.count }}</h3>
+                    <p class="text-muted mb-0">Usuarios Asignados</p>
+                </div>
+                <div class="text-center">
+                    <h3 class="text-success">{{ role.created_at|date:"d/m/Y" }}</h3>
+                    <p class="text-muted mb-0">Fecha de Creación</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Usuarios Asignados -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="card-title mb-0">
+                    <i class="bi bi-people"></i> Usuarios Asignados
+                </h6>
+            </div>
+            <div class="card-body">
+                {% if users_with_role %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Usuario</th>
+                                <th>Nombre Completo</th>
+                                <th>Email</th>
+                                <th>Departamento</th>
+                                <th>Estado</th>
+                                <th>Último Acceso</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for user_role in users_with_role %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        {% if user_role.user.avatar %}
+                                            <img src="{{ user_role.user.avatar.url }}" alt="Avatar" class="rounded-circle me-2" style="width: 32px; height: 32px;">
+                                        {% else %}
+                                            <div class="rounded-circle me-2 d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; background: var(--primary-light); color: var(--neutral-light); font-size: 0.8rem;">
+                                                {{ user_role.user.first_name|first|upper }}{{ user_role.user.last_name|first|upper }}
+                                            </div>
+                                        {% endif %}
+                                        <span class="fw-bold">{{ user_role.user.username }}</span>
+                                    </div>
+                                </td>
+                                <td>{{ user_role.user.get_full_name|default:"-" }}</td>
+                                <td>{{ user_role.user.email|default:"-" }}</td>
+                                <td>{{ user_role.user.department|default:"-" }}</td>
+                                <td>
+                                    {% if user_role.user.is_active %}
+                                        <span class="badge bg-success">Activo</span>
+                                    {% else %}
+                                        <span class="badge bg-danger">Inactivo</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if user_role.user.last_login %}
+                                        {{ user_role.user.last_login|date:"d/m/Y H:i" }}
+                                    {% else %}
+                                        <span class="text-muted">Nunca</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="bi bi-people fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">No hay usuarios asignados</h5>
+                    <p class="text-muted">Este rol no tiene usuarios asignados actualmente</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+{{ block.super }}
+<style>
+    .card {
+        background: var(--content-bg);
+        border: 1px solid var(--border-color);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .card-header {
+        background: var(--primary-dark);
+        color: var(--neutral-light);
+        border-bottom: 1px solid var(--border-color);
+    }
+    
+    .card-footer {
+        background: var(--content-bg);
+        border-top: 1px solid var(--border-color);
+    }
+    
+    .table {
+        background: var(--content-bg);
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        border: 1px solid var(--border-color);
+    }
+    
+    .table thead th {
+        border: none;
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.8rem;
+        letter-spacing: 0.5px;
+        background: var(--primary-dark);
+        color: var(--neutral-light);
+    }
+    
+    .badge {
+        font-size: 0.7rem;
+        padding: 0.4rem 0.6rem;
+    }
+</style>
+{% endblock %}

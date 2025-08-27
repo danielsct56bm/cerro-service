@@ -136,18 +136,34 @@ class TicketTemplateFieldAdmin(admin.ModelAdmin):
 
 @admin.register(TicketCategory)
 class TicketCategoryAdmin(admin.ModelAdmin):
-    list_display = ['name', 'company', 'description', 'is_active']
+    list_display = ['name', 'company', 'description', 'is_active', 'background_image_preview']
     list_filter = ['company', 'is_active']
     search_fields = ['name', 'company__name']
     ordering = ['company__name', 'name']
+    fields = ['company', 'name', 'description', 'icon', 'color', 'background_image', 'is_active', 'template']
+    readonly_fields = ['background_image_preview']
+    
+    def background_image_preview(self, obj):
+        if obj.background_image:
+            return mark_safe(f'<img src="{obj.background_image.url}" width="50" height="30" style="object-fit: cover;" />')
+        return "Sin imagen"
+    background_image_preview.short_description = "Imagen de Fondo"
 
 
 @admin.register(TicketSubcategory)
 class TicketSubcategoryAdmin(admin.ModelAdmin):
-    list_display = ['name', 'category', 'is_active']
+    list_display = ['name', 'category', 'description', 'is_active', 'background_image_preview']
     list_filter = ['category__company', 'is_active']
     search_fields = ['name', 'category__name']
     ordering = ['category__name', 'name']
+    fields = ['category', 'name', 'description', 'icon', 'color', 'background_image', 'is_active']
+    readonly_fields = ['background_image_preview']
+    
+    def background_image_preview(self, obj):
+        if obj.background_image:
+            return mark_safe(f'<img src="{obj.background_image.url}" width="50" height="30" style="object-fit: cover;" />')
+        return "Sin imagen"
+    background_image_preview.short_description = "Imagen de Fondo"
 
 
 @admin.register(WorkSession)

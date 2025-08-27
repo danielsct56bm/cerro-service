@@ -1,0 +1,230 @@
+{% extends 'CPdashadmin/base_admin.html' %}
+
+{% block admin_title %}Ver Subcategoría - {{ subcategory.name }}{% endblock %}
+
+{% block content_title %}{{ subcategory.name }}{% endblock %}
+{% block content_subtitle %}Detalles de la subcategoría{% endblock %}
+
+{% block admin_content %}
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-diagram-3 me-2"></i>
+                    Información de la Subcategoría
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6><i class="bi bi-tag me-2"></i>Nombre</h6>
+                        <p class="text-muted">{{ subcategory.name }}</p>
+                        
+                        <h6><i class="bi bi-text-paragraph me-2"></i>Descripción</h6>
+                        <p class="text-muted">{{ subcategory.description|default:"Sin descripción" }}</p>
+                        
+                        <h6><i class="bi bi-folder me-2"></i>Categoría Padre</h6>
+                        <p class="text-muted">{{ subcategory.category.name }}</p>
+                        
+                        <h6><i class="bi bi-emoji-smile me-2"></i>Icono</h6>
+                        <p class="text-muted">
+                            <i class="bi {{ subcategory.icon|default:'subcategory' }} me-2"></i>
+                            {{ subcategory.icon|default:"subcategory" }}
+                        </p>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <h6><i class="bi bi-palette me-2"></i>Color</h6>
+                        <p class="text-muted">
+                            <span class="badge" style="background-color: {{ subcategory.color|default:'#42a5f5' }}; color: white;">
+                                {{ subcategory.color|default:"#42a5f5" }}
+                            </span>
+                        </p>
+                        
+                        <h6><i class="bi bi-toggle-on me-2"></i>Estado</h6>
+                        <p class="text-muted">
+                            {% if subcategory.is_active %}
+                                <span class="badge bg-success">Activa</span>
+                            {% else %}
+                                <span class="badge bg-secondary">Inactiva</span>
+                            {% endif %}
+                        </p>
+                        
+                        <h6><i class="bi bi-calendar me-2"></i>Fecha Creación</h6>
+                        <p class="text-muted">{{ subcategory.created_at|date:"d/m/Y H:i" }}</p>
+                        
+                        <h6><i class="bi bi-calendar-check me-2"></i>Última Actualización</h6>
+                        <p class="text-muted">{{ subcategory.updated_at|date:"d/m/Y H:i" }}</p>
+                        
+                        <h6><i class="bi bi-image me-2"></i>Imagen de Fondo</h6>
+                        {% if subcategory.background_image %}
+                            <div class="mb-2">
+                                <img src="{{ subcategory.background_image.url }}" alt="Imagen de fondo" 
+                                     class="img-thumbnail" style="max-width: 150px; max-height: 100px;">
+                            </div>
+                        {% else %}
+                            <p class="text-muted">Sin imagen de fondo</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tickets asociados -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-ticket me-2"></i>
+                    Tickets Asociados
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if subcategory.tickets.exists %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th><i class="bi bi-hash me-2"></i>Código</th>
+                                    <th><i class="bi bi-person me-2"></i>Solicitante</th>
+                                    <th><i class="bi bi-flag me-2"></i>Estado</th>
+                                    <th><i class="bi bi-exclamation-triangle me-2"></i>Prioridad</th>
+                                    <th><i class="bi bi-calendar me-2"></i>Fecha</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for ticket in subcategory.tickets.all|slice:":10" %}
+                                <tr>
+                                    <td>
+                                        <a href="#" class="text-decoration-none">{{ ticket.code }}</a>
+                                    </td>
+                                    <td>{{ ticket.requester.get_full_name }}</td>
+                                    <td>
+                                        {% if ticket.status == 'open' %}
+                                            <span class="badge bg-primary">Abierto</span>
+                                        {% elif ticket.status == 'in_progress' %}
+                                            <span class="badge bg-warning">En Progreso</span>
+                                        {% elif ticket.status == 'resolved' %}
+                                            <span class="badge bg-success">Resuelto</span>
+                                        {% elif ticket.status == 'closed' %}
+                                            <span class="badge bg-secondary">Cerrado</span>
+                                        {% elif ticket.status == 'canceled' %}
+                                            <span class="badge bg-danger">Cancelado</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if ticket.priority == 'low' %}
+                                            <span class="badge bg-info">Baja</span>
+                                        {% elif ticket.priority == 'normal' %}
+                                            <span class="badge bg-primary">Normal</span>
+                                        {% elif ticket.priority == 'high' %}
+                                            <span class="badge bg-warning">Alta</span>
+                                        {% elif ticket.priority == 'urgent' %}
+                                            <span class="badge bg-danger">Urgente</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ ticket.created_at|date:"d/m/Y" }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% if subcategory.tickets.count > 10 %}
+                        <div class="text-center mt-3">
+                            <p class="text-muted">Mostrando los últimos 10 tickets de {{ subcategory.tickets.count }} total</p>
+                        </div>
+                    {% endif %}
+                {% else %}
+                    <div class="text-center text-muted py-4">
+                        <i class="bi bi-ticket-x display-4 mb-3"></i>
+                        <p>No hay tickets asociados a esta subcategoría</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <!-- Acciones -->
+        <div class="card">
+            <div class="card-header">
+                <h6 class="card-title mb-0">
+                    <i class="bi bi-gear me-2"></i>
+                    Acciones
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{% url 'CPdashadmin:edit_ticket_subcategory' subcategory.id %}" class="btn btn-primary">
+                        <i class="bi bi-pencil me-2"></i>Editar Subcategoría
+                    </a>
+                    <a href="{% url 'CPdashadmin:delete_ticket_subcategory' subcategory.id %}" class="btn btn-danger">
+                        <i class="bi bi-trash me-2"></i>Eliminar Subcategoría
+                    </a>
+                    <a href="{% url 'CPdashadmin:ticket_categories_management' %}" class="btn btn-secondary">
+                        <i class="bi bi-arrow-left me-2"></i>Volver a Categorías
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Estadísticas -->
+        <div class="card mt-3">
+            <div class="card-header">
+                <h6 class="card-title mb-0">
+                    <i class="bi bi-graph-up me-2"></i>
+                    Estadísticas
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-6">
+                        <h4 class="text-primary">{{ subcategory.tickets.count }}</h4>
+                        <small class="text-muted">Total Tickets</small>
+                    </div>
+                    <div class="col-6">
+                        <h4 class="text-success">{{ subcategory.tickets.all|length }}</h4>
+                        <small class="text-muted">Resueltos</small>
+                    </div>
+                </div>
+                <hr>
+                <div class="row text-center">
+                    <div class="col-6">
+                        <h4 class="text-warning">{{ subcategory.tickets.all|length }}</h4>
+                        <small class="text-muted">En Progreso</small>
+                    </div>
+                    <div class="col-6">
+                        <h4 class="text-info">{{ subcategory.tickets.all|length }}</h4>
+                        <small class="text-muted">Abiertos</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Información adicional -->
+        <div class="card mt-3">
+            <div class="card-header">
+                <h6 class="card-title mb-0">
+                    <i class="bi bi-info-circle me-2"></i>
+                    Información Adicional
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <h6><i class="bi bi-building me-2"></i>Empresa</h6>
+                    <p class="text-muted">{{ subcategory.category.company.name }}</p>
+                    
+                    <h6><i class="bi bi-clock me-2"></i>Antigüedad</h6>
+                    <p class="text-muted">{{ subcategory.created_at|timesince }}</p>
+                    
+                    {% if subcategory.background_image %}
+                        <h6><i class="bi bi-file-earmark-image me-2"></i>Tamaño de Imagen</h6>
+                        <p class="text-muted">{{ subcategory.background_image.size|filesizeformat }}</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

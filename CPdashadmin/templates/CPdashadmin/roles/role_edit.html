@@ -1,0 +1,145 @@
+{% extends 'CPdashadmin/base_admin.html' %}
+
+{% block admin_title %}Editar Rol - {{ role.name }}{% endblock %}
+
+{% block content_title %}Editar Rol{% endblock %}
+{% block content_subtitle %}Modificar información del rol {{ role.name }}{% endblock %}
+
+{% block admin_content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="card-title mb-0">
+                    <i class="bi bi-pencil"></i> Editar Rol: {{ role.name }}
+                </h6>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Nombre del Rol *</label>
+                        <input type="text" class="form-control" id="name" name="name" value="{{ role.name }}" required>
+                        <div class="form-text">Nombre único para identificar el rol</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="key" class="form-label">Clave del Rol</label>
+                        <input type="text" class="form-control" id="key" name="key" value="{{ role.key }}" readonly>
+                        <div class="form-text">La clave del rol no se puede modificar</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Descripción</label>
+                        <textarea class="form-control" id="description" name="description" rows="4">{{ role.description }}</textarea>
+                        <div class="form-text">Descripción opcional del rol y sus responsabilidades</div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'CPdashadmin:role_detail' role.id %}" class="btn btn-secondary">
+                            <i class="bi bi-arrow-left"></i> Cancelar
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-lg"></i> Guardar Cambios
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Información Adicional -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h6 class="card-title mb-0">
+                    <i class="bi bi-info-circle"></i> Información del Rol
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>Empresa:</strong> {{ role.company.name }}</p>
+                        <p><strong>Creado:</strong> {{ role.created_at|date:"d/m/Y H:i" }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Actualizado:</strong> {{ role.updated_at|date:"d/m/Y H:i" }}</p>
+                        <p><strong>Usuarios Asignados:</strong> {{ role.userrole_set.count }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+{{ block.super }}
+<style>
+    .card {
+        background: var(--content-bg);
+        border: 1px solid var(--border-color);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .card-header {
+        background: var(--primary-dark);
+        color: var(--neutral-light);
+        border-bottom: 1px solid var(--border-color);
+    }
+    
+    .form-control {
+        background-color: var(--content-bg);
+        border-color: var(--border-color);
+        color: var(--text-color);
+    }
+    
+    .form-control:focus {
+        background-color: var(--content-bg);
+        border-color: var(--primary-light);
+        color: var(--text-color);
+        box-shadow: 0 0 0 0.2rem rgba(var(--bs-primary-rgb), 0.25);
+    }
+    
+    .form-control[readonly] {
+        background-color: var(--border-color);
+        opacity: 0.7;
+    }
+    
+    .form-label {
+        color: var(--text-color);
+        font-weight: 600;
+    }
+    
+    .form-text {
+        color: var(--text-muted);
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Validación del formulario
+    const form = document.querySelector('form');
+    const nameInput = document.getElementById('name');
+    
+    form.addEventListener('submit', function(e) {
+        if (!nameInput.value.trim()) {
+            e.preventDefault();
+            alert('El nombre del rol es obligatorio');
+            nameInput.focus();
+            return false;
+        }
+    });
+    
+    // Confirmación antes de enviar
+    form.addEventListener('submit', function(e) {
+        if (!confirm('¿Está seguro de que desea guardar los cambios en este rol?')) {
+            e.preventDefault();
+            return false;
+        }
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,341 @@
+{% extends 'CPdashadmin/base_admin.html' %}
+
+{% block admin_title %}Editar Categoría{% endblock %}
+
+{% block content_title %}Editar Categoría{% endblock %}
+{% block content_subtitle %}Modificar información de la categoría de tickets{% endblock %}
+
+{% block admin_content %}
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-folder-gear me-2"></i>
+                    Información de la Categoría
+                </h5>
+            </div>
+            <div class="card-body">
+                <form id="editCategoryForm" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    
+                    <!-- Nombre de la categoría -->
+                    <div class="mb-3">
+                        <label for="categoryName" class="form-label">
+                            <i class="bi bi-tag me-2"></i>Nombre de la Categoría *
+                        </label>
+                        <input type="text" class="form-control" id="categoryName" required 
+                               value="{{ category.name }}"
+                               placeholder="Ej: Mantenimiento, Soporte Técnico, Consultas">
+                        <div class="form-text">Nombre descriptivo para identificar la categoría</div>
+                    </div>
+
+                    <!-- Descripción -->
+                    <div class="mb-3">
+                        <label for="categoryDescription" class="form-label">
+                            <i class="bi bi-text-paragraph me-2"></i>Descripción
+                        </label>
+                        <textarea class="form-control" id="categoryDescription" rows="3" 
+                                  placeholder="Descripción detallada de la categoría">{{ category.description }}</textarea>
+                        <div class="form-text">Descripción opcional para mayor claridad</div>
+                    </div>
+
+                    <!-- Icono -->
+                    <div class="mb-3">
+                        <label for="categoryIcon" class="form-label">
+                            <i class="bi bi-emoji-smile me-2"></i>Icono
+                        </label>
+                        <div class="input-group">
+                            <span class="input-group-text">
+                                <i class="bi" id="iconPreview">{{ category.icon|default:"folder" }}</i>
+                            </span>
+                            <input type="text" class="form-control" id="categoryIcon" 
+                                   placeholder="folder" value="{{ category.icon|default:'folder' }}">
+                        </div>
+                        <div class="form-text">Nombre del icono de Bootstrap Icons (sin "bi-")</div>
+                    </div>
+
+                    <!-- Color -->
+                    <div class="mb-3">
+                        <label for="categoryColor" class="form-label">
+                            <i class="bi bi-palette me-2"></i>Color
+                        </label>
+                        <div class="input-group">
+                            <input type="color" class="form-control form-control-color" id="categoryColor" 
+                                   value="{{ category.color|default:'#1976d2' }}" title="Elegir color">
+                            <input type="text" class="form-control" id="categoryColorHex" 
+                                   value="{{ category.color|default:'#1976d2' }}" placeholder="#1976d2">
+                        </div>
+                        <div class="form-text">Color para identificar la categoría visualmente</div>
+                    </div>
+
+                    <!-- Imagen de Fondo -->
+                    <div class="mb-3">
+                        <label for="categoryBackgroundImage" class="form-label">
+                            <i class="bi bi-image me-2"></i>Imagen de Fondo
+                        </label>
+                        <div class="mb-2">
+                            {% if category.background_image %}
+                                <div class="current-image mb-2">
+                                    <img src="{{ category.background_image.url }}" alt="Imagen actual" 
+                                         class="img-thumbnail" style="max-width: 200px; max-height: 150px;">
+                                    <div class="form-text">Imagen actual</div>
+                                </div>
+                            {% endif %}
+                        </div>
+                        <input type="file" class="form-control" id="categoryBackgroundImage" 
+                               accept="image/*" name="background_image">
+                        <div class="form-text">Imagen de fondo para la categoría (opcional)</div>
+                    </div>
+
+                    <!-- Estado -->
+                    <div class="mb-3">
+                        <label class="form-label">
+                            <i class="bi bi-toggle-on me-2"></i>Estado
+                        </label>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="categoryActive" 
+                                   {% if category.is_active %}checked{% endif %}>
+                            <label class="form-check-label" for="categoryActive">
+                                Categoría activa
+                            </label>
+                        </div>
+                        <div class="form-text">Las categorías inactivas no aparecerán en los kiosks</div>
+                    </div>
+
+                    <!-- Botones -->
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'CPdashadmin:ticket_categories_management' %}" class="btn btn-secondary">
+                            <i class="bi bi-arrow-left me-2"></i>Cancelar
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle me-2"></i>Actualizar Categoría
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <!-- Vista previa -->
+        <div class="card">
+            <div class="card-header">
+                <h6 class="card-title mb-0">
+                    <i class="bi bi-eye me-2"></i>Vista Previa
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="category-preview p-3 border rounded" id="categoryPreview">
+                    <div class="d-flex align-items-center">
+                        <div class="me-3">
+                            <i class="bi bi-folder fs-2" id="previewIcon"></i>
+                        </div>
+                        <div>
+                            <h6 class="mb-1" id="previewName">Nombre de la Categoría</h6>
+                            <small class="text-muted" id="previewDescription">Descripción de la categoría</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-3">
+                    <small class="text-muted">
+                        <i class="bi bi-info-circle me-1"></i>
+                        Esta es una vista previa de cómo se verá la categoría en el sistema
+                    </small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Información adicional -->
+        <div class="card mt-3">
+            <div class="card-header">
+                <h6 class="card-title mb-0">
+                    <i class="bi bi-info-circle me-2"></i>Información Adicional
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-6">
+                        <div class="border-end">
+                            <h5 class="text-primary mb-1">{{ category.tickets.count }}</h5>
+                            <small class="text-muted">Tickets</small>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <h5 class="text-success mb-1">{{ category.subcategories.count }}</h5>
+                        <small class="text-muted">Subcategorías</small>
+                    </div>
+                </div>
+                
+                <hr>
+                
+                <div class="small">
+                    <div class="mb-2">
+                        <strong>Creada:</strong><br>
+                        <span class="text-muted">{{ category.created_at|date:"d/m/Y H:i" }}</span>
+                    </div>
+                    <div>
+                        <strong>Última actualización:</strong><br>
+                        <span class="text-muted">{{ category.updated_at|date:"d/m/Y H:i" }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de confirmación -->
+<div class="modal fade" id="confirmModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirmar Cambios</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>¿Estás seguro de que deseas actualizar esta categoría?</p>
+                <p class="text-muted small">Los cambios se aplicarán inmediatamente.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="confirmUpdate">Actualizar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de éxito -->
+<div class="modal fade" id="successModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title text-success">
+                    <i class="bi bi-check-circle me-2"></i>Éxito
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>La categoría ha sido actualizada exitosamente.</p>
+            </div>
+            <div class="modal-footer">
+                <a href="{% url 'CPdashadmin:ticket_categories_management' %}" class="btn btn-primary">
+                    Continuar
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('editCategoryForm');
+    const nameInput = document.getElementById('categoryName');
+    const descriptionInput = document.getElementById('categoryDescription');
+    const iconInput = document.getElementById('categoryIcon');
+    const colorInput = document.getElementById('categoryColor');
+    const colorHexInput = document.getElementById('categoryColorHex');
+    const activeInput = document.getElementById('categoryActive');
+    const backgroundImageInput = document.getElementById('categoryBackgroundImage');
+    
+    // Elementos de vista previa
+    const previewName = document.getElementById('previewName');
+    const previewDescription = document.getElementById('previewDescription');
+    const previewIcon = document.getElementById('previewIcon');
+    const categoryPreview = document.getElementById('categoryPreview');
+    
+    // Actualizar vista previa
+    function updatePreview() {
+        previewName.textContent = nameInput.value || 'Nombre de la Categoría';
+        previewDescription.textContent = descriptionInput.value || 'Descripción de la categoría';
+        previewIcon.className = `bi bi-${iconInput.value || 'folder'} fs-2`;
+        categoryPreview.style.borderColor = colorInput.value;
+    }
+    
+    // Sincronizar color
+    function syncColor() {
+        colorInput.value = colorHexInput.value;
+        colorHexInput.value = colorInput.value;
+        updatePreview();
+    }
+    
+    // Event listeners
+    nameInput.addEventListener('input', updatePreview);
+    descriptionInput.addEventListener('input', updatePreview);
+    iconInput.addEventListener('input', updatePreview);
+    colorInput.addEventListener('input', syncColor);
+    colorHexInput.addEventListener('input', syncColor);
+    
+    // Inicializar vista previa
+    updatePreview();
+    
+    // Manejar envío del formulario
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData();
+        formData.append('name', nameInput.value);
+        formData.append('description', descriptionInput.value);
+        formData.append('icon', iconInput.value || 'folder');
+        formData.append('color', colorInput.value);
+        formData.append('is_active', activeInput.checked);
+        
+        if (backgroundImageInput.files.length > 0) {
+            formData.append('background_image', backgroundImageInput.files[0]);
+        }
+        
+        // Mostrar modal de confirmación
+        const confirmModal = new bootstrap.Modal(document.getElementById('confirmModal'));
+        confirmModal.show();
+        
+        // Confirmar actualización
+        document.getElementById('confirmUpdate').onclick = function() {
+            updateCategory(formData);
+            confirmModal.hide();
+        };
+    });
+    
+    function updateCategory(formData) {
+        fetch('{% url "CPdashadmin:edit_ticket_category" category.id %}', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const successModal = new bootstrap.Modal(document.getElementById('successModal'));
+                successModal.show();
+            } else {
+                showAlert('error', data.message || 'Error al actualizar la categoría');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showAlert('error', 'Error de conexión al actualizar la categoría');
+        });
+    }
+    
+    function showAlert(type, message) {
+        const alertDiv = document.createElement('div');
+        alertDiv.className = `alert alert-${type === 'error' ? 'danger' : 'success'} alert-dismissible fade show`;
+        alertDiv.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        
+        const cardBody = document.querySelector('.card-body');
+        cardBody.insertBefore(alertDiv, cardBody.firstChild);
+        
+        setTimeout(() => {
+            alertDiv.remove();
+        }, 5000);
+    }
+});
+</script>
+{% endblock %}
+

@@ -72,6 +72,12 @@
                     </a>
                 </li>
                 <li>
+                    <a href="{% url 'CPdashadmin:subcategories_management' %}" class="{% if 'subcategories_management' in request.resolver_match.url_name %}active{% endif %}">
+                        <i class="bi bi-tags"></i>
+                        <span class="nav-text">Subcategorías</span>
+                    </a>
+                </li>
+                <li>
                     <a href="{% url 'CPdashadmin:kiosk_management' %}" class="{% if 'kiosk_management' in request.resolver_match.url_name %}active{% endif %}">
                         <i class="bi bi-display"></i>
                         <span class="nav-text">Gestión de Kiosks</span>

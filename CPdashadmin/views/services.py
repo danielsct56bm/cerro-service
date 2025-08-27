@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.db.models import Count, Q
-from django.core.paginator import Paginator
+from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
 from django.utils import timezone
@@ -384,11 +384,13 @@ def create_ticket_subcategory(request):
     
     if request.method == 'POST':
         try:
-            data = json.loads(request.body)
-            category_id = data.get('category_id')
-            name = data.get('name')
-            icon = data.get('icon', 'subcategory')
-            color = data.get('color', '#42a5f5')
+            # Obtener datos del formulario
+            category_id = request.POST.get('category_id')
+            name = request.POST.get('name')
+            description = request.POST.get('description', '')
+            icon = request.POST.get('icon', 'subcategory')
+            color = request.POST.get('color', '#42a5f5')
+            is_active = request.POST.get('is_active') == 'true'
             
             if not category_id or not name:
                 return JsonResponse({
@@ -410,10 +412,17 @@ def create_ticket_subcategory(request):
             subcategory = TicketSubcategory.objects.create(
                 category=category,
                 name=name,
+                description=description,
                 icon=icon,
                 color=color,
-                is_active=True
+                is_active=is_active
             )
+            
+            # Manejar imagen de fondo
+            if 'background_image' in request.FILES:
+                background_image = request.FILES['background_image']
+                subcategory.background_image = background_image
+                subcategory.save()
             
             return JsonResponse({
                 'success': True,
@@ -421,9 +430,11 @@ def create_ticket_subcategory(request):
                 'subcategory': {
                     'id': subcategory.id,
                     'name': subcategory.name,
+                    'description': subcategory.description,
                     'icon': subcategory.icon,
                     'color': subcategory.color,
                     'is_active': subcategory.is_active,
+                    'background_image_url': subcategory.background_image.url if subcategory.background_image else None,
                     'category_name': category.name,
                     'created_at': subcategory.created_at.isoformat()
                 }
@@ -441,6 +452,148 @@ def create_ticket_subcategory(request):
         'categories': categories,
     }
     return render(request, 'CPdashadmin/services/tickets/create_subcategory.html', context)
+
+
+@login_required
+def view_ticket_subcategory(request, subcategory_id):
+    """Ver detalles de una subcategoría"""
+    company = request.user.company
+    subcategory = get_object_or_404(TicketSubcategory, id=subcategory_id, category__company=company)
+    
+    # Obtener tickets asociados
+    tickets = Ticket.objects.filter(subcategory=subcategory).select_related('requester', 'assigned_to').order_by('-created_at')[:10]
+    
+    # Estadísticas de la subcategoría
+    total_tickets = Ticket.objects.filter(subcategory=subcategory).count()
+    open_tickets = Ticket.objects.filter(subcategory=subcategory, status='open').count()
+    in_progress_tickets = Ticket.objects.filter(subcategory=subcategory, status='in_progress').count()
+    closed_tickets = Ticket.objects.filter(subcategory=subcategory, status='closed').count()
+    
+    context = {
+        'subcategory': subcategory,
+        'tickets': tickets,
+        'total_tickets': total_tickets,
+        'open_tickets': open_tickets,
+        'in_progress_tickets': in_progress_tickets,
+        'closed_tickets': closed_tickets,
+    }
+    return render(request, 'CPdashadmin/services/tickets/view_subcategory.html', context)
+
+
+@login_required
+def edit_ticket_subcategory(request, subcategory_id):
+    """Editar subcategoría de tickets"""
+    company = request.user.company
+    subcategory = get_object_or_404(TicketSubcategory, id=subcategory_id, category__company=company)
+    
+    if request.method == 'POST':
+        try:
+            # Obtener datos del formulario
+            name = request.POST.get('name')
+            description = request.POST.get('description', '')
+            icon = request.POST.get('icon', 'subcategory')
+            color = request.POST.get('color', '#42a5f5')
+            is_active = request.POST.get('is_active') == 'true'
+            
+            if not name:
+                return JsonResponse({
+                    'success': False,
+                    'message': 'El nombre es requerido'
+                }, status=400)
+            
+            # Verificar si ya existe otra subcategoría con ese nombre en la misma categoría
+            if TicketSubcategory.objects.filter(category=subcategory.category, name=name).exclude(id=subcategory.id).exists():
+                return JsonResponse({
+                    'success': False,
+                    'message': 'Ya existe una subcategoría con ese nombre en esta categoría'
+                }, status=400)
+            
+            # Actualizar subcategoría
+            subcategory.name = name
+            subcategory.description = description
+            subcategory.icon = icon
+            subcategory.color = color
+            subcategory.is_active = is_active
+            
+            # Manejar imagen de fondo
+            if 'background_image' in request.FILES:
+                background_image = request.FILES['background_image']
+                # Eliminar imagen anterior si existe
+                if subcategory.background_image:
+                    subcategory.background_image.delete(save=False)
+                subcategory.background_image = background_image
+            
+            subcategory.save()
+            
+            return JsonResponse({
+                'success': True,
+                'message': 'Subcategoría actualizada exitosamente',
+                'subcategory': {
+                    'id': subcategory.id,
+                    'name': subcategory.name,
+                    'description': subcategory.description,
+                    'icon': subcategory.icon,
+                    'color': subcategory.color,
+                    'is_active': subcategory.is_active,
+                    'background_image_url': subcategory.background_image.url if subcategory.background_image else None,
+                    'category_name': subcategory.category.name,
+                    'updated_at': subcategory.updated_at.isoformat()
+                }
+            })
+            
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'message': f'Error al actualizar subcategoría: {str(e)}'
+            }, status=400)
+    
+    # GET - Mostrar formulario de edición
+    categories = TicketCategory.objects.filter(company=company, is_active=True)
+    context = {
+        'subcategory': subcategory,
+        'categories': categories,
+    }
+    return render(request, 'CPdashadmin/services/tickets/edit_subcategory.html', context)
+
+
+@login_required
+def delete_ticket_subcategory(request, subcategory_id):
+    """Eliminar subcategoría de tickets"""
+    company = request.user.company
+    subcategory = get_object_or_404(TicketSubcategory, id=subcategory_id, category__company=company)
+    
+    if request.method == 'POST':
+        try:
+            # Verificar si hay tickets asociados
+            if subcategory.tickets.exists():
+                return JsonResponse({
+                    'success': False,
+                    'message': 'No se puede eliminar la subcategoría porque tiene tickets asociados'
+                }, status=400)
+            
+            # Eliminar imagen de fondo si existe
+            if subcategory.background_image:
+                subcategory.background_image.delete(save=False)
+            
+            subcategory_name = subcategory.name
+            subcategory.delete()
+            
+            return JsonResponse({
+                'success': True,
+                'message': f'Subcategoría "{subcategory_name}" eliminada exitosamente'
+            })
+            
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'message': f'Error al eliminar subcategoría: {str(e)}'
+            }, status=400)
+    
+    # GET - Mostrar confirmación
+    context = {
+        'subcategory': subcategory,
+    }
+    return render(request, 'CPdashadmin/services/tickets/delete_subcategory.html', context)
 
 
 @login_required
@@ -839,10 +992,10 @@ def reports(request):
     total_tickets = Ticket.objects.filter(company=request.user.company).count()
     
     # Usuarios por rol - solo de la empresa actual
-    users_by_role = Role.objects.filter(company=request.user.company).annotate(user_count=Count('userrole')).values('name', 'user_count')
+    users_by_role = Role.objects.filter(company=request.user.company).annotate(user_count=Count('userrole')).values('name', 'user_count').order_by()
     
     # Tickets por estado - solo de la empresa actual
-    tickets_by_status = Ticket.objects.filter(company=request.user.company).values('status').annotate(count=Count('id'))
+    tickets_by_status = Ticket.objects.filter(company=request.user.company).values('status').annotate(count=Count('id')).order_by()
     
     context = {
         'total_users': total_users,
@@ -852,3 +1005,67 @@ def reports(request):
         'tickets_by_status': list(tickets_by_status),
     }
     return render(request, 'CPdashadmin/reports/reports.html', context)
+
+
+@login_required
+def subcategories_management(request):
+    """Vista para gestionar subcategorías con filtros y paginación"""
+    company = request.user.company
+    
+    # Obtener parámetros de filtro
+    search = request.GET.get('search', '')
+    category_filter = request.GET.get('category', '')
+    status_filter = request.GET.get('status', '')
+    page = request.GET.get('page', 1)
+    
+    # Query base
+    subcategories = TicketSubcategory.objects.filter(category__company=company).select_related('category').prefetch_related('tickets')
+    
+    # Aplicar filtros
+    if search:
+        subcategories = subcategories.filter(
+            Q(name__icontains=search) | 
+            Q(description__icontains=search) |
+            Q(category__name__icontains=search)
+        )
+    
+    if category_filter:
+        subcategories = subcategories.filter(category_id=category_filter)
+    
+    if status_filter == 'active':
+        subcategories = subcategories.filter(is_active=True)
+    elif status_filter == 'inactive':
+        subcategories = subcategories.filter(is_active=False)
+    
+    # Ordenar por fecha de creación (más recientes primero)
+    subcategories = subcategories.order_by('-created_at')
+    
+    # Paginación
+    paginator = Paginator(subcategories, 20)  # 20 subcategorías por página
+    try:
+        subcategories = paginator.page(page)
+    except (PageNotAnInteger, EmptyPage):
+        subcategories = paginator.page(1)
+    
+    # Estadísticas
+    total_subcategories = TicketSubcategory.objects.filter(category__company=company).count()
+    active_subcategories = TicketSubcategory.objects.filter(category__company=company, is_active=True).count()
+    total_categories = TicketCategory.objects.filter(company=company).count()
+    total_tickets = Ticket.objects.filter(company=company).count()
+    
+    # Categorías para el filtro
+    categories = TicketCategory.objects.filter(company=company, is_active=True).order_by('name')
+    
+    context = {
+        'subcategories': subcategories,
+        'categories': categories,
+        'search': search,
+        'category_filter': category_filter,
+        'status_filter': status_filter,
+        'total_subcategories': total_subcategories,
+        'active_subcategories': active_subcategories,
+        'total_categories': total_categories,
+        'total_tickets': total_tickets,
+    }
+    
+    return render(request, 'CPdashadmin/services/tickets/subcategories_management.html', context)

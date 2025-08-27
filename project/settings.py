@@ -255,6 +255,7 @@ CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:8000",
     "http://localhost:60513",
     "http://127.0.0.1:60513",
+    "https://cerro-service.onrender.com",
 ]
 
 CORS_ALLOW_CREDENTIALS = True

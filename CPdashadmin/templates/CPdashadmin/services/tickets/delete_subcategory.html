@@ -1,0 +1,212 @@
+{% extends 'CPdashadmin/base_admin.html' %}
+
+{% block admin_title %}Eliminar Subcategoría - {{ subcategory.name }}{% endblock %}
+
+{% block content_title %}Eliminar Subcategoría{% endblock %}
+{% block content_subtitle %}Confirmar eliminación de la subcategoría{% endblock %}
+
+{% block admin_content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card border-danger">
+            <div class="card-header bg-danger text-white">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    Confirmar Eliminación
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-warning">
+                    <h6><i class="bi bi-exclamation-triangle me-2"></i>Advertencia</h6>
+                    <p class="mb-0">Esta acción no se puede deshacer. La subcategoría será eliminada permanentemente.</p>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6><i class="bi bi-tag me-2"></i>Nombre</h6>
+                        <p class="text-muted">{{ subcategory.name }}</p>
+                        
+                        <h6><i class="bi bi-folder me-2"></i>Categoría Padre</h6>
+                        <p class="text-muted">{{ subcategory.category.name }}</p>
+                        
+                        <h6><i class="bi bi-building me-2"></i>Empresa</h6>
+                        <p class="text-muted">{{ subcategory.category.company.name }}</p>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <h6><i class="bi bi-calendar me-2"></i>Fecha Creación</h6>
+                        <p class="text-muted">{{ subcategory.created_at|date:"d/m/Y H:i" }}</p>
+                        
+                        <h6><i class="bi bi-ticket me-2"></i>Tickets Asociados</h6>
+                        <p class="text-muted">{{ subcategory.tickets.count }} tickets</p>
+                        
+                        {% if subcategory.background_image %}
+                            <h6><i class="bi bi-image me-2"></i>Imagen de Fondo</h6>
+                            <p class="text-muted">Sí ({{ subcategory.background_image.size|filesizeformat }})</p>
+                        {% else %}
+                            <h6><i class="bi bi-image me-2"></i>Imagen de Fondo</h6>
+                            <p class="text-muted">No</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                {% if subcategory.tickets.exists %}
+                    <div class="alert alert-danger mt-3">
+                        <h6><i class="bi bi-exclamation-triangle me-2"></i>¡Atención!</h6>
+                        <p class="mb-0">Esta subcategoría tiene {{ subcategory.tickets.count }} tickets asociados. No se puede eliminar hasta que todos los tickets sean reasignados o eliminados.</p>
+                    </div>
+                {% endif %}
+
+                <form id="deleteSubcategoryForm" method="POST">
+                    {% csrf_token %}
+                    <div class="d-flex justify-content-between mt-4">
+                        <a href="{% url 'CPdashadmin:view_ticket_subcategory' subcategory.id %}" class="btn btn-secondary">
+                            <i class="bi bi-arrow-left me-2"></i>Cancelar
+                        </a>
+                        {% if not subcategory.tickets.exists %}
+                            <button type="submit" class="btn btn-danger">
+                                <i class="bi bi-trash me-2"></i>Eliminar Subcategoría
+                            </button>
+                        {% else %}
+                            <button type="button" class="btn btn-danger" disabled>
+                                <i class="bi bi-trash me-2"></i>No se puede eliminar
+                            </button>
+                        {% endif %}
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Información adicional -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h6 class="card-title mb-0">
+                    <i class="bi bi-info-circle me-2"></i>
+                    Información Adicional
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6><i class="bi bi-text-paragraph me-2"></i>Descripción</h6>
+                        <p class="text-muted">{{ subcategory.description|default:"Sin descripción" }}</p>
+                        
+                        <h6><i class="bi bi-emoji-smile me-2"></i>Icono</h6>
+                        <p class="text-muted">
+                            <i class="bi {{ subcategory.icon|default:'subcategory' }} me-2"></i>
+                            {{ subcategory.icon|default:"subcategory" }}
+                        </p>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <h6><i class="bi bi-palette me-2"></i>Color</h6>
+                        <p class="text-muted">
+                            <span class="badge" style="background-color: {{ subcategory.color|default:'#42a5f5' }}; color: white;">
+                                {{ subcategory.color|default:"#42a5f5" }}
+                            </span>
+                        </p>
+                        
+                        <h6><i class="bi bi-toggle-on me-2"></i>Estado</h6>
+                        <p class="text-muted">
+                            {% if subcategory.is_active %}
+                                <span class="badge bg-success">Activa</span>
+                            {% else %}
+                                <span class="badge bg-secondary">Inactiva</span>
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de confirmación -->
+<div class="modal fade" id="confirmModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-exclamation-triangle text-warning me-2"></i>
+                    Confirmar Eliminación
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>¿Estás seguro de que deseas eliminar la subcategoría <strong>"{{ subcategory.name }}"</strong>?</p>
+                <p class="text-muted">Esta acción no se puede deshacer.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-danger" id="confirmDelete">
+                    <i class="bi bi-trash me-2"></i>Eliminar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('deleteSubcategoryForm');
+    const confirmModal = new bootstrap.Modal(document.getElementById('confirmModal'));
+    
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        confirmModal.show();
+    });
+    
+    document.getElementById('confirmDelete').addEventListener('click', function() {
+        // Enviar formulario
+        fetch('{% url "CPdashadmin:delete_ticket_subcategory" subcategory.id %}', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            confirmModal.hide();
+            if (data.success) {
+                showNotification(data.message, 'success');
+                setTimeout(() => {
+                    window.location.href = '{% url "CPdashadmin:ticket_categories_management" %}';
+                }, 1500);
+            } else {
+                showNotification(data.message, 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            confirmModal.hide();
+            showNotification('Error al eliminar la subcategoría', 'error');
+        });
+    });
+});
+
+function showNotification(message, type) {
+    const toast = document.createElement('div');
+    toast.className = `toast align-items-center text-white bg-${type === 'error' ? 'danger' : type} border-0`;
+    toast.setAttribute('role', 'alert');
+    toast.innerHTML = `
+        <div class="d-flex">
+            <div class="toast-body">${message}</div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    `;
+    
+    const container = document.querySelector('.toast-container') || document.body;
+    container.appendChild(toast);
+    
+    const bsToast = new bootstrap.Toast(toast);
+    bsToast.show();
+    
+    toast.addEventListener('hidden.bs.toast', function() {
+        container.removeChild(toast);
+    });
+}
+</script>
+{% endblock %}
+

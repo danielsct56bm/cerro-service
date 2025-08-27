@@ -14,10 +14,14 @@ urlpatterns = [
     path('users/<int:user_id>/delete/', views.user_delete, name='user_delete'),
     path('users/<int:user_id>/', views.user_detail, name='user_detail'),
     path('users/import/', views.user_import, name='user_import'),
+    path('users/export/', views.user_export, name='user_export'),
     
     # Roles
     path('roles/', views.role_management, name='role_management'),
     path('roles/create/', views.role_create, name='role_create'),
+    path('roles/<int:role_id>/', views.role_detail, name='role_detail'),
+    path('roles/<int:role_id>/edit/', views.role_edit, name='role_edit'),
+    path('roles/<int:role_id>/delete/', views.role_delete, name='role_delete'),
     
     # Permisos
     path('permissions/', views.permission_management, name='permission_management'),
@@ -35,6 +39,10 @@ urlpatterns = [
     path('tickets/categories/<int:category_id>/delete/', views.delete_ticket_category, name='delete_ticket_category'),
     path('tickets/categories/<int:category_id>/templates/', views.manage_category_templates, name='manage_category_templates'),
     path('tickets/subcategories/create/', views.create_ticket_subcategory, name='create_ticket_subcategory'),
+    path('tickets/subcategories/<int:subcategory_id>/', views.view_ticket_subcategory, name='view_ticket_subcategory'),
+    path('tickets/subcategories/<int:subcategory_id>/edit/', views.edit_ticket_subcategory, name='edit_ticket_subcategory'),
+    path('tickets/subcategories/<int:subcategory_id>/delete/', views.delete_ticket_subcategory, name='delete_ticket_subcategory'),
+    path('tickets/subcategories/', views.subcategories_management, name='subcategories_management'),
     path('tickets/templates/create/', views.create_ticket_template, name='create_ticket_template'),
     
     # Servicios

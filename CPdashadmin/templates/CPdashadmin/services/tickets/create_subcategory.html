@@ -1,0 +1,279 @@
+{% extends 'CPdashadmin/base_admin.html' %}
+
+{% block admin_title %}Crear Nueva Subcategoría{% endblock %}
+
+{% block content_title %}Crear Nueva Subcategoría{% endblock %}
+{% block content_subtitle %}Definir una nueva subcategoría de tickets{% endblock %}
+
+{% block admin_content %}
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-diagram-3 me-2"></i>
+                    Información de la Subcategoría
+                </h5>
+            </div>
+            <div class="card-body">
+                <form id="createSubcategoryForm" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    
+                    <!-- Categoría Padre -->
+                    <div class="mb-3">
+                        <label for="subcategoryCategory" class="form-label">
+                            <i class="bi bi-folder me-2"></i>Categoría Padre *
+                        </label>
+                        <select class="form-select" id="subcategoryCategory" required>
+                            <option value="">Seleccionar categoría...</option>
+                            {% for category in categories %}
+                                <option value="{{ category.id }}" 
+                                        {% if request.GET.category_id == category.id|stringformat:"s" %}selected{% endif %}>
+                                    {{ category.name }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                        <div class="form-text">Categoría a la que pertenecerá esta subcategoría</div>
+                    </div>
+
+                    <!-- Nombre de la subcategoría -->
+                    <div class="mb-3">
+                        <label for="subcategoryName" class="form-label">
+                            <i class="bi bi-tag me-2"></i>Nombre de la Subcategoría *
+                        </label>
+                        <input type="text" class="form-control" id="subcategoryName" required 
+                               placeholder="Ej: Mantenimiento Preventivo, Soporte Hardware, Consultas Generales">
+                        <div class="form-text">Nombre descriptivo para identificar la subcategoría</div>
+                    </div>
+
+                    <!-- Descripción -->
+                    <div class="mb-3">
+                        <label for="subcategoryDescription" class="form-label">
+                            <i class="bi bi-text-paragraph me-2"></i>Descripción
+                        </label>
+                        <textarea class="form-control" id="subcategoryDescription" rows="3" 
+                                  placeholder="Descripción detallada de la subcategoría"></textarea>
+                        <div class="form-text">Descripción opcional para mayor claridad</div>
+                    </div>
+
+                    <!-- Icono -->
+                    <div class="mb-3">
+                        <label for="subcategoryIcon" class="form-label">
+                            <i class="bi bi-emoji-smile me-2"></i>Icono
+                        </label>
+                        <div class="input-group">
+                            <span class="input-group-text">
+                                <i class="bi" id="iconPreview">subcategory</i>
+                            </span>
+                            <input type="text" class="form-control" id="subcategoryIcon" 
+                                   placeholder="subcategory" value="subcategory">
+                        </div>
+                        <div class="form-text">Nombre del icono de Bootstrap Icons (sin "bi-")</div>
+                    </div>
+
+                    <!-- Color -->
+                    <div class="mb-3">
+                        <label for="subcategoryColor" class="form-label">
+                            <i class="bi bi-palette me-2"></i>Color
+                        </label>
+                        <div class="input-group">
+                            <input type="color" class="form-control form-control-color" id="subcategoryColor" 
+                                   value="#42a5f5" title="Elegir color">
+                            <input type="text" class="form-control" id="subcategoryColorHex" 
+                                   value="#42a5f5" placeholder="#42a5f5">
+                        </div>
+                        <div class="form-text">Color para identificar la subcategoría visualmente</div>
+                    </div>
+
+                    <!-- Imagen de Fondo -->
+                    <div class="mb-3">
+                        <label for="subcategoryBackgroundImage" class="form-label">
+                            <i class="bi bi-image me-2"></i>Imagen de Fondo
+                        </label>
+                        <input type="file" class="form-control" id="subcategoryBackgroundImage" 
+                               accept="image/*" name="background_image">
+                        <div class="form-text">Imagen de fondo para la subcategoría (opcional)</div>
+                    </div>
+
+                    <!-- Estado -->
+                    <div class="mb-3">
+                        <label class="form-label">
+                            <i class="bi bi-toggle-on me-2"></i>Estado
+                        </label>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="subcategoryActive" checked>
+                            <label class="form-check-label" for="subcategoryActive">
+                                Subcategoría activa
+                            </label>
+                        </div>
+                        <div class="form-text">Las subcategorías inactivas no aparecerán en los kiosks</div>
+                    </div>
+
+                    <!-- Botones -->
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'CPdashadmin:ticket_categories_management' %}" class="btn btn-secondary">
+                            <i class="bi bi-arrow-left me-2"></i>Cancelar
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle me-2"></i>Crear Subcategoría
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="card-title mb-0">
+                    <i class="bi bi-info-circle me-2"></i>
+                    Información
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <h6><i class="bi bi-lightbulb me-2"></i>Consejos</h6>
+                    <ul class="mb-0">
+                        <li>Las subcategorías ayudan a organizar mejor los tickets</li>
+                        <li>Elige un nombre claro y descriptivo</li>
+                        <li>Usa iconos y colores para diferenciarlas</li>
+                        <li>Las imágenes de fondo mejoran la experiencia visual</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de confirmación -->
+<div class="modal fade" id="successModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-check-circle text-success me-2"></i>
+                    Subcategoría Creada
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>La subcategoría ha sido creada exitosamente.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" data-bs-dismiss="modal">
+                    Continuar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Sincronizar color picker con input de texto
+    const colorPicker = document.getElementById('subcategoryColor');
+    const colorHex = document.getElementById('subcategoryColorHex');
+    
+    colorPicker.addEventListener('input', function() {
+        colorHex.value = this.value;
+    });
+    
+    colorHex.addEventListener('input', function() {
+        colorPicker.value = this.value;
+    });
+
+    // Actualizar preview del icono
+    const iconInput = document.getElementById('subcategoryIcon');
+    const iconPreview = document.getElementById('iconPreview');
+    
+    iconInput.addEventListener('input', function() {
+        iconPreview.className = 'bi ' + (this.value || 'subcategory');
+    });
+
+    // Manejar envío del formulario
+    const form = document.getElementById('createSubcategoryForm');
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData();
+        formData.append('category_id', document.getElementById('subcategoryCategory').value);
+        formData.append('name', document.getElementById('subcategoryName').value);
+        formData.append('description', document.getElementById('subcategoryDescription').value);
+        formData.append('icon', document.getElementById('subcategoryIcon').value || 'subcategory');
+        formData.append('color', document.getElementById('subcategoryColor').value);
+        formData.append('is_active', document.getElementById('subcategoryActive').checked);
+        
+        // Agregar imagen de fondo si existe
+        const backgroundImageInput = document.getElementById('subcategoryBackgroundImage');
+        if (backgroundImageInput.files.length > 0) {
+            formData.append('background_image', backgroundImageInput.files[0]);
+        }
+        
+        // Validaciones
+        if (!formData.get('name').trim()) {
+            showNotification('El nombre de la subcategoría es requerido', 'warning');
+            return;
+        }
+        
+        if (!formData.get('category_id')) {
+            showNotification('Debe seleccionar una categoría', 'warning');
+            return;
+        }
+
+        // Enviar datos
+        fetch('{% url "CPdashadmin:create_ticket_subcategory" %}', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showNotification(data.message, 'success');
+                // Mostrar modal de éxito
+                const successModal = new bootstrap.Modal(document.getElementById('successModal'));
+                successModal.show();
+                
+                // Redirigir después de cerrar el modal
+                document.getElementById('successModal').addEventListener('hidden.bs.modal', function() {
+                    window.location.href = '{% url "CPdashadmin:ticket_categories_management" %}';
+                });
+            } else {
+                showNotification(data.message, 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification('Error al crear la subcategoría', 'error');
+        });
+    });
+});
+
+function showNotification(message, type) {
+    const toast = document.createElement('div');
+    toast.className = `toast align-items-center text-white bg-${type === 'error' ? 'danger' : type} border-0`;
+    toast.setAttribute('role', 'alert');
+    toast.innerHTML = `
+        <div class="d-flex">
+            <div class="toast-body">${message}</div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    `;
+    
+    const container = document.querySelector('.toast-container') || document.body;
+    container.appendChild(toast);
+    
+    const bsToast = new bootstrap.Toast(toast);
+    bsToast.show();
+    
+    toast.addEventListener('hidden.bs.toast', function() {
+        container.removeChild(toast);
+    });
+}
+</script>
+{% endblock %}
