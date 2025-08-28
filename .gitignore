@@ -8,3 +8,9 @@ __pycache__/
 *.pywz
 *.pyzw
 *.pyzwz
+.idea/cerro-service.iml
+.idea/inspectionProfiles/profiles_settings.xml
+.idea/misc.xml
+.idea/modules.xml
+.idea/vcs.xml
+media/user_avatars/1_92ea1024_generated.svg
